@@ -1,11 +1,12 @@
-
+const jwt = require('jsonwebtoken');
 import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import createHttpError from "http-errors";
 import Joi from "joi";
 import { config } from "../../../config/config";
 import User from "../../models/User";
-const jwt = require('jsonwebtoken');
+import { utcDateTime } from '../../utils/dateFormats';
+
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
@@ -45,6 +46,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 name: payload?.name,
                 email: payload?.email,
                 profilePicture: payload?.picture,
+                authTokenIssuedAt: utcDateTime().valueOf(),
             })
         }
         let token = jwt.sign({ _id: user._id, name: user.name, email: user.email }, process.env.JWT_SECRET, {
@@ -53,8 +55,31 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         })
         return res.json({ user, token });
     } catch (error) {
+        console.log('error', error);
         next(error)
     }
 }
 
-export { login }
+const updateUserType = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            role: Joi.string().required(),
+        });
+        const { value, error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message)
+        }
+        const { _id } = req.user;
+        let user = await User.findById({ _id });
+        console.log('useruser', user);
+        if (user) {
+            user.role = value.role;
+            await user.save();
+        }
+        return res.json({ user });
+    } catch (error) {
+        
+    }
+}
+
+export { login, updateUserType }

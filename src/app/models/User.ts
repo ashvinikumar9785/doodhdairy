@@ -18,7 +18,7 @@ const schema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['CUSTOMER', 'VENDOR'],
+        enum: ['USER', 'SELLER'],
     },
     googleId: {
         type: String,
@@ -30,7 +30,8 @@ const schema = new mongoose.Schema({
         type: String,
         enum: ['ACTIVE', 'INACTIVE'],
         default: "ACTIVE",
-    }
+    },
+    authTokenIssuedAt: Number,
 })
 
 export default mongoose.model('User', schema)
