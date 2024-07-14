@@ -6,6 +6,7 @@ import Joi from "joi";
 import { config } from "../../../config/config";
 import User from "../../models/User";
 import { utcDateTime } from '../../utils/dateFormats';
+import { sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -58,11 +59,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             );
         }
         if (!user) {
-            return res.status(500).json({ message: "Failed to create or update user" });
+            return sendSuccessResponse(res, false,{ user }, 'Failed to create or update user');
         }
     
         if (!user.role) {
-            return res.json({ user });
+            return sendSuccessResponse(res, true,{ user }, 'Login Success please update role');
         }
     
         const token = jwt.sign(
@@ -73,8 +74,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 issuer: 'doodhdiary'
             }
         );
-    
-        return res.json({ user, token });
+        return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
+
+        
     } catch (error) {
         console.log('error', error);
         next(error)
@@ -102,11 +104,11 @@ const updateRole = async (req: any, res: Response, next: NextFunction) => {
                 expiresIn: '30d',
                 issuer: 'doodhdiary'
             })
-            return res.json({ user, token });
+        return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
+
         }
         else{
-            // return res.json({ 'USER NOT FOUND' });
-            return res.status(404).json({ message: 'USER NOT FOUND' });
+            return sendNotFoundResponse(res, false, 'Login Success');
         }
         
        
