@@ -31,7 +31,10 @@ const schema = new mongoose.Schema({
         enum: ['ACTIVE', 'INACTIVE'],
         default: "ACTIVE",
     },
-    authTokenIssuedAt: Number,
+    authTokenIssuedAt:{
+        type:Number,
+        default:null
+    }
 })
 
 export default mongoose.model('User', schema)
