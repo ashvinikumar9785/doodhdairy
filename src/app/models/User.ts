@@ -16,6 +16,15 @@ const schema = new mongoose.Schema({
     profilePicture: {
         type: String,
     },
+
+    countryCode: {
+        type: String,
+        default:null
+    },
+    phoneNumber: {
+        type: String,
+        default:null
+    },
     role: {
         type: String,
         enum: ['USER', 'SELLER'],

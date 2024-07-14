@@ -6,7 +6,7 @@ import Joi from "joi";
 import { config } from "../../../config/config";
 import User from "../../models/User";
 import { utcDateTime } from '../../utils/dateFormats';
-import { sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
+import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -108,7 +108,7 @@ const updateRole = async (req: any, res: Response, next: NextFunction) => {
 
         }
         else{
-            return sendNotFoundResponse(res, false, 'Login Success');
+            return sendNotFoundResponse(res, false, 'Data not found');
         }
         
        
@@ -129,4 +129,62 @@ const profile = async (req: any, res: Response, next: NextFunction) => {
     }
 }
 
-export { login, updateRole,profile }
+
+const updateProfile = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            name: Joi.string().required(),
+            countryCode: Joi.string().required(),
+            phoneNumber: Joi.string().required(),
+        });
+        const { value, error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message)
+        }
+        const { _id } = req.user;
+        const checkPhone = await checkPhoneAlreadyExists(_id, value.countryCode, value.phoneNumber);
+
+        if (checkPhone) {
+            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+        }
+        let user = await User.findById({ _id });
+        console.log('useruser', user);
+        if (user) {
+            user.name=value.name
+            user.countryCode=value.countryCode
+            user.phoneNumber=value.phoneNumber
+            await user.save();
+           
+            return sendSuccessResponse(res, true,{ user }, 'Profile Updated');
+
+        }
+        else{
+            return sendNotFoundResponse(res, false, 'Data not found');
+        }
+
+        
+        
+       
+    } catch (error) {
+            return sendBadRequestResponse(res);
+        
+    }
+
+
+
+}
+async function checkPhoneAlreadyExists(userID: string, countryCode: string, phoneNumber: string):Promise<any> {
+    try {
+        const user = await User.findOne({
+            _id: { $ne: userID },
+            countryCode: countryCode,
+            phoneNumber: phoneNumber
+        }).lean();
+
+        return user !== null;
+    } catch (error) {
+        console.error('Error checking phone number existence:', error);
+        throw new Error('Failed to check phone number existence');
+    }
+}
+export { login, updateRole,profile,updateProfile }
