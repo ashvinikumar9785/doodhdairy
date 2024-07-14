@@ -47,12 +47,33 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 email: payload?.email,
                 profilePicture: payload?.picture,
                 authTokenIssuedAt: utcDateTime().valueOf(),
+                role: req.body.role,
             })
         }
-        let token = jwt.sign({ _id: user._id, name: user.name, email: user.email }, process.env.JWT_SECRET, {
-            expiresIn: '30d',
-            issuer: 'doodhdiary'
-        })
+        else{
+            user =  await User.findOneAndUpdate(
+                { ...filter  }, 
+                {authTokenIssuedAt: utcDateTime().valueOf()},     
+                { new: true } 
+            );
+        }
+        if (!user) {
+            return res.status(500).json({ message: "Failed to create or update user" });
+        }
+    
+        if (!user.role) {
+            return res.json({ user });
+        }
+    
+        const token = jwt.sign(
+            { _id: user._id, name: user.name, email: user.email },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: '30d',
+                issuer: 'doodhdiary'
+            }
+        );
+    
         return res.json({ user, token });
     } catch (error) {
         console.log('error', error);
@@ -60,26 +81,50 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-const updateUserType = async (req: any, res: Response, next: NextFunction) => {
+const updateRole = async (req: any, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
+            _id: Joi.string().required(),
             role: Joi.string().required(),
         });
         const { value, error } = schema.validate(req.body);
         if (error) {
             throw createHttpError.UnprocessableEntity(error.message)
         }
-        const { _id } = req.user;
+        const { _id,role } = req.body;
         let user = await User.findById({ _id });
         console.log('useruser', user);
         if (user) {
-            user.role = value.role;
+            user.role = role;
+            user.authTokenIssuedAt= utcDateTime().valueOf()
             await user.save();
+            let token = jwt.sign({ _id: user._id, name: user.name, email: user.email }, process.env.JWT_SECRET, {
+                expiresIn: '30d',
+                issuer: 'doodhdiary'
+            })
+            return res.json({ user, token });
         }
+        else{
+            // return res.json({ 'USER NOT FOUND' });
+            return res.status(404).json({ message: 'USER NOT FOUND' });
+        }
+        
+       
+    } catch (error) {
+        
+    }
+}
+const profile = async (req: any, res: Response, next: NextFunction) => {
+    try {
+       
+        const { _id } = req.user;
+        let user = await User.findById({ _id });
         return res.json({ user });
+        
+       
     } catch (error) {
         
     }
 }
 
-export { login, updateUserType }
+export { login, updateRole,profile }
