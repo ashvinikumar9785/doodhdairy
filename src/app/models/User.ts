@@ -19,6 +19,7 @@ const schema = new mongoose.Schema({
     role: {
         type: String,
         enum: ['USER', 'SELLER'],
+        default: null,
     },
     googleId: {
         type: String,
