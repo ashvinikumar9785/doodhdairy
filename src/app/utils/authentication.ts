@@ -4,15 +4,15 @@ import { sendUnauthorizedResponse } from "./respons";
 const jet_secret = process.env.JWT_SECRET;
 
 const verifyToken = (req: any, res: any, next: any) => {
-    jwt.verify(req.headers["authorization"], jet_secret, async (err: any, decoded: { sub: any; iat: any; }) => {
-        if (err || !decoded || !decoded.sub) {
+    jwt.verify(req.headers["authorization"], jet_secret, async (err: any, decoded: { _id: any; iat: any; }) => {
+        if (err || !decoded || !decoded._id) {
         return sendUnauthorizedResponse(res, false, 'UNAUTHORIZED');
 
 
         }
         const user = await User.findOne({
-            _id: decoded.sub,
-            authTokenIssuedAt: decoded.iat, //enable when single login needed
+            _id: decoded._id,
+            authTokenIssuedAt: decoded.iat * 1000, //enable when single login needed
         });
 
         if (!user) {

@@ -82,7 +82,84 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         next(error)
     }
 }
+// const login = async (req: Request, res: Response, next: NextFunction) => {
+//     try {
+//         const schema = Joi.object({
+//             token: Joi.string().required(),
+//             socialType: Joi.string().required(),
+//             deviceType: Joi.string().required(),
+//             socialId: Joi.string().required(),
+//             email: Joi.string().required(),
+//         });
+//         const { value, error } = schema.validate(req.body);
+//         if (error) {
+//             throw createHttpError.UnprocessableEntity(error.message)
+//         }
+//         // let payload;
+//         // if (value.socialType == 'GOOGLE') {
+//         //     let client = new OAuth2Client()
+//         //     const ticket = await client.verifyIdToken({
+//         //         idToken: req.body.token,
+//         //         audience: config.GOOGLE_OAUTH_CLIENTID,
+//         //     });
+//         //     payload = ticket.getPayload();
+//         // } else {
 
+//         // }
+//         // let filter: { email?: req, googleId?: string, appleId?: string } = {}
+//         // if (payload?.email) {
+//         //     filter.email = payload.email;
+//         // } else {
+//         //     if (req.body.socialType == 'GOOGLE') {
+//         //         filter.googleId = payload?.sub
+//         //     } else {
+//         //         filter.appleId = payload?.sub
+//         //     }
+//         // }
+//         let user = await User.findOne({email:req.body.email }).lean()
+//         if (!user) {
+//             user = await User.create({
+//                 // name: payload?.name,
+//                 // email: payload?.email,
+//                 // profilePicture: payload?.picture,
+//                 authTokenIssuedAt: utcDateTime().valueOf(),
+//                 role: req.body.role,
+//             })
+//         }
+//         else{
+//             user =  await User.findOneAndUpdate(
+//                 { email:req.body.email  }, 
+//                 {authTokenIssuedAt: utcDateTime().valueOf()},     
+//                 { new: true } 
+//             );
+//         }
+//         // if (!user) {
+//         //     return sendSuccessResponse(res, false,{ user }, 'Failed to create or update user');
+//         // }
+    
+//         // if (!user.role) {
+//         //     return sendSuccessResponse(res, true,{ user }, 'Login Success please update role');
+//         // }
+//         if(user){
+//             const token = jwt.sign(
+//                 { _id: user._id, name: user.name, email: user.email },
+//                 process.env.JWT_SECRET,
+//                 {
+//                     expiresIn: '30d',
+//                     issuer: 'doodhdiary'
+//                 }
+//             );
+//             return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
+//         }
+      
+       
+
+        
+//     } catch (error) {
+//         console.log('error', error);
+//         next(error)
+//     }
+// }
 const updateRole = async (req: any, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
@@ -166,7 +243,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         
        
     } catch (error) {
-            return sendBadRequestResponse(res);
+        next(error)
         
     }
 
