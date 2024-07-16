@@ -215,6 +215,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
             phoneNumber: Joi.string().required(),
             milkRate: Joi.string().required(),
 
+            email: Joi.string().required(),
         });
         const { value, error } = schema.validate(req.body);
         if (error) {
@@ -230,6 +231,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         console.log('useruser', user);
         if (user) {
             user.name=value.name
+            user.email=value.email
             user.countryCode=value.countryCode
             user.phoneNumber=value.phoneNumber
             user.milkRate = value.milkRate
