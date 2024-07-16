@@ -1,3 +1,4 @@
+import { string } from "joi";
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
@@ -35,6 +36,9 @@ const schema = new mongoose.Schema({
     },
     appleId: {
         type: String,
+    },
+    milkRate:{
+        type:String
     },
     status: {
         type: String,

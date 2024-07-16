@@ -213,6 +213,8 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
             name: Joi.string().required(),
             countryCode: Joi.string().required(),
             phoneNumber: Joi.string().required(),
+            milkRate: Joi.string().required(),
+
             email: Joi.string().required(),
         });
         const { value, error } = schema.validate(req.body);
@@ -232,6 +234,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
             user.email=value.email
             user.countryCode=value.countryCode
             user.phoneNumber=value.phoneNumber
+            user.milkRate = value.milkRate
             await user.save();
            
             return sendSuccessResponse(res, true,{ user }, 'Profile Updated');
