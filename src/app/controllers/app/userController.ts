@@ -213,6 +213,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
             name: Joi.string().required(),
             countryCode: Joi.string().required(),
             phoneNumber: Joi.string().required(),
+            email: Joi.string().required(),
         });
         const { value, error } = schema.validate(req.body);
         if (error) {
@@ -228,6 +229,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         console.log('useruser', user);
         if (user) {
             user.name=value.name
+            user.email=value.email
             user.countryCode=value.countryCode
             user.phoneNumber=value.phoneNumber
             await user.save();
