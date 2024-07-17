@@ -51,21 +51,21 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 role: req.body.role,
             })
         }
-        else{
-            user =  await User.findOneAndUpdate(
-                { ...filter  }, 
-                {authTokenIssuedAt: utcDateTime().valueOf()},     
-                { new: true } 
+        else {
+            user = await User.findOneAndUpdate(
+                { ...filter },
+                { authTokenIssuedAt: utcDateTime().valueOf() },
+                { new: true }
             );
         }
         if (!user) {
-            return sendSuccessResponse(res, false,{ user }, 'Failed to create or update user');
+            return sendSuccessResponse(res, false, { user }, 'Failed to create or update user');
         }
-    
+
         if (!user.role) {
-            return sendSuccessResponse(res, true,{ user }, 'Login Success please update role');
+            return sendSuccessResponse(res, true, { user }, 'Login Success please update role');
         }
-    
+
         const token = jwt.sign(
             { _id: user._id, name: user.name, email: user.email },
             process.env.JWT_SECRET,
@@ -74,9 +74,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 issuer: 'doodhdiary'
             }
         );
-        return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
+        return sendSuccessResponse(res, true, { user, token }, 'Login Success');
 
-        
+
     } catch (error) {
         console.log('error', error);
         next(error)
@@ -136,7 +136,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 //         // if (!user) {
 //         //     return sendSuccessResponse(res, false,{ user }, 'Failed to create or update user');
 //         // }
-    
+
 //         // if (!user.role) {
 //         //     return sendSuccessResponse(res, true,{ user }, 'Login Success please update role');
 //         // }
@@ -151,10 +151,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 //             );
 //             return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
 //         }
-      
-       
 
-        
+
+
+
 //     } catch (error) {
 //         console.log('error', error);
 //         next(error)
@@ -170,39 +170,39 @@ const updateRole = async (req: any, res: Response, next: NextFunction) => {
         if (error) {
             throw createHttpError.UnprocessableEntity(error.message)
         }
-        const { _id,role } = req.body;
+        const { _id, role } = req.body;
         let user = await User.findById({ _id });
         console.log('useruser', user);
         if (user) {
             user.role = role;
-            user.authTokenIssuedAt= utcDateTime().valueOf()
+            user.authTokenIssuedAt = utcDateTime().valueOf()
             await user.save();
             let token = jwt.sign({ _id: user._id, name: user.name, email: user.email }, process.env.JWT_SECRET, {
                 expiresIn: '30d',
                 issuer: 'doodhdiary'
             })
-        return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
+            return sendSuccessResponse(res, true, { user, token }, 'Login Success');
 
         }
-        else{
+        else {
             return sendNotFoundResponse(res, false, 'Data not found');
         }
-        
-       
+
+
     } catch (error) {
-        
+
     }
 }
 const profile = async (req: any, res: Response, next: NextFunction) => {
     try {
-       
+
         const { _id } = req.user;
         let user = await User.findById({ _id });
         return res.json({ user });
-        
-       
+
+
     } catch (error) {
-        
+
     }
 }
 
@@ -230,32 +230,32 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         let user = await User.findById({ _id });
         console.log('useruser', user);
         if (user) {
-            user.name=value.name
-            user.email=value.email
-            user.countryCode=value.countryCode
-            user.phoneNumber=value.phoneNumber
+            user.name = value.name
+            user.email = value.email
+            user.countryCode = value.countryCode
+            user.phoneNumber = value.phoneNumber
             user.milkRate = value.milkRate
             await user.save();
-           
-            return sendSuccessResponse(res, true,{ user }, 'Profile Updated');
+
+            return sendSuccessResponse(res, true, { user }, 'Profile Updated');
 
         }
-        else{
+        else {
             return sendNotFoundResponse(res, false, 'Data not found');
         }
 
-        
-        
-       
+
+
+
     } catch (error) {
         next(error)
-        
+
     }
 
 
 
 }
-async function checkPhoneAlreadyExists(userID: string, countryCode: string, phoneNumber: string):Promise<any> {
+async function checkPhoneAlreadyExists(userID: string, countryCode: string, phoneNumber: string): Promise<any> {
     try {
         const user = await User.findOne({
             _id: { $ne: userID },
@@ -269,4 +269,4 @@ async function checkPhoneAlreadyExists(userID: string, countryCode: string, phon
         throw new Error('Failed to check phone number existence');
     }
 }
-export { login, updateRole,profile,updateProfile }
+export { login, updateRole, profile, updateProfile }
