@@ -15,7 +15,7 @@ const schema = new mongoose.Schema({
         type: String,
         default:null
     },
-    quantityLable: {
+    quantityLabel: {
         type: String,
         default:'Ltr'
     },

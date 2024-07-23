@@ -1,7 +1,16 @@
-import { object, string } from "joi";
-import mongoose from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
+import mongoosePaginate from 'mongoose-paginate-v2';
 
-const schema = new mongoose.Schema({
+interface IClient extends Document {
+    name: string;
+    userId: mongoose.Schema.Types.ObjectId;
+    countryCode: string;
+    phoneNumber: string;
+    milkRate?: string;
+    milkBrand?: string;
+}
+
+const clientSchema = new Schema<IClient>({
     name: {
         type: String,
         required: true,
@@ -10,22 +19,26 @@ const schema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
     },
-
     countryCode: {
         type: String,
-        default:null
+        default: null,
     },
     phoneNumber: {
         type: String,
-        default:null
+        default: null,
     },
-  
-    milkRate:{
-        type:String
+    milkRate: {
+        type: String,
     },
-    milkBrand:{
-        type:String
+    milkBrand: {
+        type: String,
     },
-})
+});
 
-export default mongoose.model('Client', schema)
+clientSchema.plugin(mongoosePaginate);
+
+interface IClientModel extends mongoose.PaginateModel<IClient> {}
+
+const Client = mongoose.model<IClient, IClientModel>('Client', clientSchema);
+
+export default Client;
