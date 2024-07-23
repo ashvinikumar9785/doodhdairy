@@ -65,5 +65,15 @@ const getClient = async (req: any, res: Response, next: NextFunction) => {
     }
 }
 
+const getClientProfile = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.query;
+        let client = await Client.findById({ _id: id });
+        return res.json({ client });
 
-export { addClient, getClient }
+    } catch (error) {
+
+    }
+}
+
+export { addClient, getClient, getClientProfile }
