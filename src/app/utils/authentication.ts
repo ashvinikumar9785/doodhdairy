@@ -16,7 +16,7 @@ const verifyToken = (req: any, res: any, next: any) => {
         });
 
         if (!user) {
-        return sendUnauthorizedResponse(res, false, 'UNAUTHORIZEDtest');
+        return sendUnauthorizedResponse(res, false, 'UNAUTHORIZED');
 
 
         }

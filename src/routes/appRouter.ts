@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { login, profile, updateRole,updateProfile } from "../app/controllers/app/userController";
 import { addClient,getClient, getClientProfile, } from "../app/controllers/app/clientController";
-import { getDataForMonth, saveMilkData } from "../app/controllers/app/milkDataController";
+import { getDataForMonth, saveMilkData,getDateData } from "../app/controllers/app/milkDataController";
 import { verifyToken } from "../app/utils/authentication";
 const appRouter = Router()
 
@@ -16,7 +16,8 @@ appRouter.get('/client', verifyToken, getClient);
 appRouter.get('/client-profile', getClientProfile);
 
 appRouter.post('/save-milk-data', verifyToken, saveMilkData);
-appRouter.post('/get-milk-data', verifyToken, getDataForMonth);
+appRouter.post('/get-month-milk-hisotry', verifyToken, getDataForMonth);
+appRouter.get('/get-date-milk', verifyToken, getDateData);
 
 
 export default appRouter

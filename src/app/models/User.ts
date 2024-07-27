@@ -38,7 +38,7 @@ const schema = new mongoose.Schema({
         type: String,
     },
     milkRate:{
-        type:String
+        type:Number
     },
     status: {
         type: String,

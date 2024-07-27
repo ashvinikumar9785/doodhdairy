@@ -18,6 +18,7 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             clientId: Joi.string().required(),
             date: Joi.date().required(),
             quantity: Joi.number().required(),
+            sellerId:Joi.string().optional()
 
         });
         const { value, error } = schema.validate(req.body);
@@ -25,14 +26,29 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             throw createHttpError.UnprocessableEntity(error.message)
         }
         const userId = req.user._id;
-        const { clientId, date, quantity } = req.body;
+        
+        const { clientId, date, quantity,sellerId } = req.body;
+        const clientdata = await Client.findOne({ _id: clientId })
+        const user = await User.findOne({ _id: clientId })
+        let milkRate = 0;
+        if (clientdata) {
+            milkRate = Number(clientdata.milkRate);
+            if (isNaN(milkRate)) {
+                milkRate = 0; // or handle the NaN case appropriately
+            }
+        } else {
+            milkRate = Number(user?.milkRate);
+            if (isNaN(milkRate)) {
+                milkRate = 0; // or handle the NaN case appropriately
+            }
+        }
         const client = await CalendarData.create({
             clientId,
             date,
             quantity,
             userId,
-
-
+            sellerId,
+            milkRate
         })
         return sendSuccessResponse(res, true, { client }, 'Record added');
 
@@ -48,59 +64,82 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         const schema = Joi.object({
             monthName: Joi.string().required(),
             clientId: Joi.string().required(),
-            date: Joi.date().optional(),
 
         });
         const { value, error } = schema.validate(req.body);
         if (error) {
             throw createHttpError.UnprocessableEntity(error.message)
         }
-        const { monthName, clientId, date } = req.body
+        const { monthName, clientId } = req.body
 
         const userId = req.user._id
         const startOfMonth = moment(monthName, 'MMMM').startOf('month').toDate();
         const endOfMonth = moment(monthName, 'MMMM').endOf('month').toDate();
-        const client = await Client.findOne({ _id: clientId })
+       
+      console.log("startOfMonthstartOfMonth",startOfMonth)
 
-
-        if (client) {
-            const result = await CalendarData.aggregate([
-                {
-                    $match: {
-                        userId: new mongoose.Types.ObjectId(userId),
-                        clientId: new mongoose.Types.ObjectId(clientId),
-                        date: { $gte: startOfMonth, $lte: endOfMonth }
-                    }
-                },
-                {
-                    $group: {
-                        _id: null,
-                        totalQuantity: { $sum: { $toDouble: '$quantity' } }
-                    }
+        const result = await CalendarData.aggregate([
+            {
+                $match: {
+                    clientId: new mongoose.Types.ObjectId(clientId),
+                    date: { $gte: startOfMonth, $lte: endOfMonth }
                 }
-            ]);
-            let dateBaseMilk = null;
-            if (date) {
-                dateBaseMilk = await CalendarData.findOne({
-                    userId: userId,
-                    clientId: clientId,
-                    date: date
-                })
+            },
+            {
+                $project: {
+                    quantity: { $toDouble: '$quantity' },
+                    milkRate: { $toDouble: '$milkRate' }
+                }
+            },
+            {
+                $addFields: {
+                    totalValue: { $multiply: ['$quantity', '$milkRate'] }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalAmount: { $sum: '$totalValue' },  // Sum of (quantity * milkRate)
+                    totalQuantity: { $sum: '$quantity' } // Sum of quantity
+                }
             }
-
-            const totalQuantity = result.length > 0 ? result[0].totalQuantity : 0;
-            const totalQuantityNumber = Number(totalQuantity);
-
-
-            return sendSuccessResponse(res, true, {
-                totalQuantity: totalQuantityNumber,
-                totalAmount: totalQuantityNumber * Number(client.milkRate),
-                dateBaseMilk
-            }, 'Record Fetched');
+        ]);
+        
+        if (result.length > 0) {
+            const firstResult = result[0];
+            return sendSuccessResponse(res, true, firstResult, 'Record Fetched');
         } else {
             return sendNotFoundResponse(res, false, 'Data not found');
 
         }
+        
+
+
+            
+      
+
+    }
+    catch (error) {
+        next(error)
+    }
+
+};
+const getDateData = async (req: any, res: Response, next: NextFunction) => {
+    try {
+       
+        const { clientId, date } = req.query
+
+        const userId = req.user._id
+        
+           
+                const dateBaseMilk = await CalendarData.findOne({
+                    clientId: clientId,
+                    date: date
+                })
+            
+
+            return sendSuccessResponse(res, true, dateBaseMilk, 'Record Fetched');
+      
 
     }
     catch (error) {
@@ -109,5 +148,4 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
 
 };
 
-
-export { saveMilkData, getDataForMonth }
+export { saveMilkData, getDataForMonth,getDateData }

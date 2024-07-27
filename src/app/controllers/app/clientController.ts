@@ -17,13 +17,19 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
             countryCode: Joi.string().required(),
             phoneNumber: Joi.string().required(),
             milkBrand: Joi.string().required(),
-            milkRate: Joi.string().required(),
+            milkRate: Joi.number().required(),
         });
         const { value, error } = schema.validate(req.body);
         if (error) {
             throw createHttpError.UnprocessableEntity(error.message)
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate } = req.body;
+
+        const checkPhone = await checkPhoneAlreadyExists( countryCode, phoneNumber);
+
+        if (checkPhone) {
+            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+        }
         const client = await Client.create({
             name,
             countryCode,
@@ -80,5 +86,17 @@ const getClientProfile = async (req: any, res: Response, next: NextFunction) => 
 
     }
 }
+async function checkPhoneAlreadyExists(countryCode: string, phoneNumber: string): Promise<any> {
+    try {
+        const user = await Client.findOne({
+            countryCode: countryCode,
+            phoneNumber: phoneNumber
+        }).lean();
 
+        return user !== null;
+    } catch (error) {
+        console.error('Error checking phone number existence:', error);
+        throw new Error('Failed to check phone number existence');
+    }
+}
 export { addClient, getClient, getClientProfile }
