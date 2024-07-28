@@ -29,9 +29,12 @@ const clientSchema = new Schema<IClient>({
     },
     milkRate: {
         type: Number,
+        default: 0,
+
     },
     milkBrand: {
         type: String,
+        default: null,
     },
 });
 
