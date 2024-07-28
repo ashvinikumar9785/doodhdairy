@@ -8,6 +8,7 @@ import User from "../../models/User";
 import Client from "../../models/Client";
 import { utcDateTime } from '../../utils/dateFormats';
 import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
+const mongoose = require('mongoose');
 
 const addClient = async (req: any, res: Response, next: NextFunction) => {
     try {
@@ -16,13 +17,19 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
             countryCode: Joi.string().required(),
             phoneNumber: Joi.string().required(),
             milkBrand: Joi.string().required(),
-            milkRate: Joi.string().required(),
+            milkRate: Joi.number().required(),
         });
         const { value, error } = schema.validate(req.body);
         if (error) {
             throw createHttpError.UnprocessableEntity(error.message)
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate } = req.body;
+
+        const checkPhone = await checkPhoneAlreadyExists( countryCode, phoneNumber);
+
+        if (checkPhone) {
+            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+        }
         const client = await Client.create({
             name,
             countryCode,
@@ -41,29 +48,33 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
         next(error)
     }
 }
-const getClient = async (req: any, res: Response, next: NextFunction) => {
+const getClient = async (req: any, res: Response,next: NextFunction) => {
     try {
-        const { _id } = req.user;
-        const limit = parseInt(req.query.limit, 10) || 10;
-        const page = parseInt(req.query.page, 10) || 1;
+        const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit 10 if not provided
+        const userId = req.user._id; // Assuming userId is passed as a URL parameter
 
-        const totalRecords = await Client.countDocuments({ userId: _id });
-        const client = await Client.find({ userId: _id })
-            .skip((page - 1) * limit)
-            .limit(limit);
+        const options = {
+            page: parseInt(page as string, 10),
+            limit: parseInt(limit as string, 10),
+            lean: true, // Use lean queries for better performance
+            leanWithId: false, // By default, document id is removed. Set to true if you need it.
+        };
 
-        const nextPage = (page * limit) < totalRecords;
+        // Use the paginate method with your query
+        const result = await Client.paginate({ userId:  new mongoose.Types.ObjectId(userId) }, options);
+
+        const { docs: clients, totalDocs: totalRecords, hasNextPage: nextPage } = result;
 
         return sendSuccessResponse(res, true, {
-            client,
+            clients,
             totalRecords,
             nextPage
         }, 'Client List');
     } catch (error) {
         console.log('error', error);
-        next(error);
+        next(error)
     }
-}
+};
 
 const getClientProfile = async (req: any, res: Response, next: NextFunction) => {
     try {
@@ -75,5 +86,17 @@ const getClientProfile = async (req: any, res: Response, next: NextFunction) => 
 
     }
 }
+async function checkPhoneAlreadyExists(countryCode: string, phoneNumber: string): Promise<any> {
+    try {
+        const user = await Client.findOne({
+            countryCode: countryCode,
+            phoneNumber: phoneNumber
+        }).lean();
 
+        return user !== null;
+    } catch (error) {
+        console.error('Error checking phone number existence:', error);
+        throw new Error('Failed to check phone number existence');
+    }
+}
 export { addClient, getClient, getClientProfile }

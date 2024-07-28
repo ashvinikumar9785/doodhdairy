@@ -2,9 +2,13 @@ import { object, string } from "joi";
 import mongoose from "mongoose";
 
 const schema = new mongoose.Schema({
+    sellerId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: false,
+    },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true,
+        required: false,
     },
     clientId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -15,9 +19,13 @@ const schema = new mongoose.Schema({
         type: String,
         default:null
     },
-    quantityLable: {
+    quantityLabel: {
         type: String,
         default:'Ltr'
+    },
+
+    milkRate: {
+        type: Number,
     },
     date:{
         type:Date,
