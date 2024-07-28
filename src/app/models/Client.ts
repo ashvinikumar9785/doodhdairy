@@ -8,6 +8,7 @@ interface IClient extends Document {
     phoneNumber: string;
     milkRate?: string;
     milkBrand?: string;
+    isDeleted?: boolean;
 }
 
 const clientSchema = new Schema<IClient>({
@@ -29,10 +30,17 @@ const clientSchema = new Schema<IClient>({
     },
     milkRate: {
         type: Number,
+        default: 0,
+
     },
     milkBrand: {
         type: String,
+        default: null,
     },
+    isDeleted:{
+        type:Boolean,
+        default:false
+    }
 });
 
 clientSchema.plugin(mongoosePaginate);

@@ -31,8 +31,10 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
         const clientdata = await Client.findOne({ _id: clientId })
         const user = await User.findOne({ _id: clientId })
         let milkRate = 0;
+        let milkBrand= null;
         if (clientdata) {
             milkRate = Number(clientdata.milkRate);
+            milkBrand = clientdata.milkBrand
             if (isNaN(milkRate)) {
                 milkRate = 0; // or handle the NaN case appropriately
             }
@@ -48,7 +50,8 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             quantity,
             userId,
             sellerId,
-            milkRate
+            milkRate,
+            milkBrand
         })
         return sendSuccessResponse(res, true, { client }, 'Record added');
 
@@ -75,8 +78,8 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         const userId = req.user._id
         const startOfMonth = moment(monthName, 'MMMM').startOf('month').toDate();
         const endOfMonth = moment(monthName, 'MMMM').endOf('month').toDate();
-       
-      console.log("startOfMonthstartOfMonth",startOfMonth)
+       console.log("startOfMonth",startOfMonth)
+       console.log("endOfMonth",endOfMonth)
 
         const result = await CalendarData.aggregate([
             {

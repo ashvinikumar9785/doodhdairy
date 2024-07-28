@@ -5,6 +5,7 @@ const schema = new mongoose.Schema({
     sellerId: {
         type: mongoose.Schema.Types.ObjectId,
         required: false,
+        default:null
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -30,7 +31,11 @@ const schema = new mongoose.Schema({
     date:{
         type:Date,
         default:null
-    }
+    },
+    milkBrand: {
+        type: String,
+        default: null,
+    },
   
     
 })
