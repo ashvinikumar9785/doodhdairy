@@ -25,7 +25,7 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate } = req.body;
 
-        const checkPhone = await checkPhoneAlreadyExists( countryCode, phoneNumber);
+        const checkPhone = await checkPhoneAlreadyExists(null, countryCode, phoneNumber);
 
         if (checkPhone) {
             return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
@@ -48,6 +48,53 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
         next(error)
     }
 }
+
+
+const editClient = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            clientId: Joi.string().required(),
+            name: Joi.string().required(),
+            countryCode: Joi.string().required(),
+            phoneNumber: Joi.string().required(),
+            milkBrand: Joi.string().required(),
+            milkRate: Joi.number().required(),
+        });
+        const { value, error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message)
+        }
+        const { name, countryCode, phoneNumber, milkBrand, milkRate,clientId } = req.body;
+        const checkPhone = await checkPhoneAlreadyExists(clientId, countryCode, phoneNumber);
+
+
+        if (checkPhone) {
+            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+        }
+        const client = await Client.findById({_id:clientId})
+        if(client){
+            client.name=name
+            client.countryCode=countryCode
+            client.phoneNumber=phoneNumber
+            client.milkBrand= milkBrand
+            client.milkRate=milkRate
+            await client.save()
+            return sendSuccessResponse(res, true, { client }, 'Client updated');
+
+        }
+        else{
+            return sendSuccessResponse(res, false, {  }, 'Client not found');
+
+        }
+       
+
+
+
+    } catch (error) {
+        console.log('error', error);
+        next(error)
+    }
+}
 const getClient = async (req: any, res: Response,next: NextFunction) => {
     try {
         const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit 10 if not provided
@@ -61,7 +108,7 @@ const getClient = async (req: any, res: Response,next: NextFunction) => {
         };
 
         // Use the paginate method with your query
-        const result = await Client.paginate({ userId:  new mongoose.Types.ObjectId(userId) }, options);
+        const result = await Client.paginate({ userId:  new mongoose.Types.ObjectId(userId),isDeleted:false }, options);
 
         const { docs: clients, totalDocs: totalRecords, hasNextPage: nextPage } = result;
 
@@ -86,12 +133,36 @@ const getClientProfile = async (req: any, res: Response, next: NextFunction) => 
 
     }
 }
-async function checkPhoneAlreadyExists(countryCode: string, phoneNumber: string): Promise<any> {
+
+const clientDelete = async (req: any, res: Response, next: NextFunction) => {
     try {
-        const user = await Client.findOne({
+        const clientId = req.params.id;
+        let client = await Client.findById({ _id: clientId });
+        if(client){
+            client.isDeleted= true
+            await client.save();
+
+           
+        }
+        return sendSuccessResponse(res, true, {  }, 'Profile Deleted');
+
+    } catch (error) {
+
+    }
+}
+async function checkPhoneAlreadyExists(userID: string | null, countryCode: string, phoneNumber: string): Promise<any> {
+    try {
+        const query: any = {
             countryCode: countryCode,
             phoneNumber: phoneNumber
-        }).lean();
+        };
+
+        // Add the $ne condition if userID is provided
+        if (userID) {
+            query._id = { $ne: userID };
+        }
+
+        const user = await User.findOne(query).lean();
 
         return user !== null;
     } catch (error) {
@@ -99,4 +170,4 @@ async function checkPhoneAlreadyExists(countryCode: string, phoneNumber: string)
         throw new Error('Failed to check phone number existence');
     }
 }
-export { addClient, getClient, getClientProfile }
+export { addClient, getClient, getClientProfile,clientDelete,editClient }
