@@ -1,17 +1,17 @@
 import { Response } from 'express';
 
-export const sendUnauthorizedResponse = (res: Response,status:boolean=false, message: string = 'UNAUTHORIZED') => {
-    return res.status(401).json({ status,message });
+export const sendUnauthorizedResponse = ({ res, statustext = false, message = 'UNAUTHORIZED' } : { res: Response, statustext?: boolean, message?: string }) => {
+    return res.status(401).json({ statustext,message });
 };
 
-export const sendSuccessResponse = (res: Response,status:boolean = true, data: any = {}, message: string = 'SUCCESS') => {
-    return res.status(200).json({ status,message, data });
+export const sendSuccessResponse = ({ res, statustext = true, data = {}, message = 'SUCCESS' } : { res: Response, statustext?: boolean, data?: any, message?: string }) => {
+    return res.status(200).json({ statustext, message, data });
 };
 
-export const sendNotFoundResponse = (res: Response,status:boolean=false, message: string = 'NOT_FOUND') => {
-    return res.status(404).json({ status,message });
+export const sendNotFoundResponse = ({ res, statustext = false, message = 'NOT_FOUND' } : { res: Response, statustext?: boolean, message?: string }) => {
+    return res.status(404).json({ statustext, message });
 };
 
-export const sendBadRequestResponse = (res: Response, message: string = 'BAD_REQUEST') => {
-    return res.status(400).json({ status: false, message });
+export const sendBadRequestResponse = ({ res, statustext = false, message = 'BAD_REQUEST' } : { res: Response, statustext?: boolean, message?: string }) => {
+    return res.status(400).json({ statustext, message });
 };

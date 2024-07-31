@@ -59,11 +59,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             );
         }
         if (!user) {
-            return sendSuccessResponse(res, false, { user }, 'Failed to create or update user');
+            return sendSuccessResponse({res, statustext: false, data: { user }, message: 'Failed to create or update user'});
         }
 
         if (!user.role) {
-            return sendSuccessResponse(res, true, { user }, 'Login Success please update role');
+            return sendSuccessResponse({res, data: { user }, message: 'Login Success please update role'});
         }
 
         const token = jwt.sign(
@@ -74,7 +74,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
                 issuer: 'doodhdiary'
             }
         );
-        return sendSuccessResponse(res, true, { user, token }, 'Login Success');
+        return sendSuccessResponse({res, data: { user, token }, message: 'Login Success'});
 
 
     } catch (error) {
@@ -181,11 +181,11 @@ const updateRole = async (req: any, res: Response, next: NextFunction) => {
                 expiresIn: '30d',
                 issuer: 'doodhdiary'
             })
-            return sendSuccessResponse(res, true, { user, token }, 'Login Success');
+            return sendSuccessResponse({res, data: { user, token }, message: 'Login Success'});
 
         }
         else {
-            return sendNotFoundResponse(res, false, 'Data not found');
+            return sendNotFoundResponse({res, message: 'Data not found'});
         }
 
 
@@ -225,7 +225,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         const checkPhone = await checkPhoneAlreadyExists(_id, value.countryCode, value.phoneNumber);
 
         if (checkPhone) {
-            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+            return sendSuccessResponse({res, statustext: false, message: 'Phone number already exists for another user'});
         }
         let user = await User.findById({ _id });
         console.log('useruser', user);
@@ -237,11 +237,11 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
             user.milkRate = value.milkRate
             await user.save();
 
-            return sendSuccessResponse(res, true, { user }, 'Profile Updated');
+            return sendSuccessResponse({res, data: { user }, message: 'Profile Updated'});
 
         }
         else {
-            return sendNotFoundResponse(res, false, 'Data not found');
+            return sendNotFoundResponse({res, message: 'Data not found'});
         }
 
 

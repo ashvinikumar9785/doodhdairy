@@ -53,7 +53,7 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             milkRate,
             milkBrand
         })
-        return sendSuccessResponse(res, true, { client }, 'Record added');
+        return sendSuccessResponse({res, data: { client }, message: 'Record added'});
 
 
 
@@ -110,17 +110,11 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         
         if (result.length > 0) {
             const firstResult = result[0];
-            return sendSuccessResponse(res, true, firstResult, 'Record Fetched');
+            return sendSuccessResponse({res: res, statustext: true, data: firstResult, message: 'Record Fetched'});
         } else {
-            return sendNotFoundResponse(res, false, 'Data not found');
+            return sendSuccessResponse({res: res, data: [], message: 'Data not found'});
 
         }
-        
-
-
-            
-      
-
     }
     catch (error) {
         next(error)
@@ -141,7 +135,7 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
                 })
             
 
-            return sendSuccessResponse(res, true, dateBaseMilk, 'Record Fetched');
+            return sendSuccessResponse({res, data: dateBaseMilk, message: 'Record Fetched'});
       
 
     }

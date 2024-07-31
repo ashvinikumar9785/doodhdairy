@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import createHttpError from "http-errors";
-import Joi from "joi";
+import Joi, { date } from "joi";
 import { config } from "../../../config/config";
 import User from "../../models/User";
 import Client from "../../models/Client";
@@ -28,7 +28,7 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
         const checkPhone = await checkPhoneAlreadyExists(null, countryCode, phoneNumber);
 
         if (checkPhone) {
-            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+            return sendSuccessResponse({res, statustext: false, message: 'Phone number already exists for another user'});
         }
         const client = await Client.create({
             name,
@@ -39,7 +39,7 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
             userId: req.user._id
 
         })
-        return sendSuccessResponse(res, true, { client }, 'Client added');
+        return sendSuccessResponse({res, data: { client }, message: 'Client added'});
 
 
 
@@ -69,7 +69,7 @@ const editClient = async (req: any, res: Response, next: NextFunction) => {
 
 
         if (checkPhone) {
-            return sendSuccessResponse(res, false, {}, 'Phone number already exists for another user');
+            return sendSuccessResponse({res, statustext: false, message: 'Phone number already exists for another user'});
         }
         const client = await Client.findById({_id:clientId})
         if(client){
@@ -79,11 +79,11 @@ const editClient = async (req: any, res: Response, next: NextFunction) => {
             client.milkBrand= milkBrand
             client.milkRate=milkRate
             await client.save()
-            return sendSuccessResponse(res, true, { client }, 'Client updated');
+            return sendSuccessResponse({res, data: { client }, message: 'Client updated'});
 
         }
         else{
-            return sendSuccessResponse(res, false, {  }, 'Client not found');
+            return sendSuccessResponse({res, statustext: false, message: 'Client not found'});
 
         }
        
@@ -112,11 +112,7 @@ const getClient = async (req: any, res: Response,next: NextFunction) => {
 
         const { docs: clients, totalDocs: totalRecords, hasNextPage: nextPage } = result;
 
-        return sendSuccessResponse(res, true, {
-            clients,
-            totalRecords,
-            nextPage
-        }, 'Client List');
+        return sendSuccessResponse({res, data: { clients, totalRecords, nextPage }, message: 'Client List'});
     } catch (error) {
         console.log('error', error);
         next(error)
@@ -127,7 +123,7 @@ const getClientProfile = async (req: any, res: Response, next: NextFunction) => 
     try {
         const { id } = req.query;
         let client = await Client.findById({ _id: id });
-        return res.json({ client });
+        return sendSuccessResponse({res, data: client, message: 'Client data'});
 
     } catch (error) {
 
@@ -144,7 +140,7 @@ const clientDelete = async (req: any, res: Response, next: NextFunction) => {
 
            
         }
-        return sendSuccessResponse(res, true, {  }, 'Profile Deleted');
+        return sendSuccessResponse({res,  message: 'Profile Deleted'});
 
     } catch (error) {
 

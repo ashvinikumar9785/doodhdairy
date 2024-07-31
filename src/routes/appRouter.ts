@@ -18,7 +18,7 @@ appRouter.delete('/client/:id', clientDelete);
 appRouter.put('/client', verifyToken, editClient);
 
 appRouter.post('/save-milk-data', verifyToken, saveMilkData );
-appRouter.post('/get-month-milk-hisotry', verifyToken, getDataForMonth);
+appRouter.post('/get-month-milk-history', verifyToken, getDataForMonth);
 appRouter.get('/get-date-milk', verifyToken, getDateData);
 
 
