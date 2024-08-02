@@ -1,9 +1,7 @@
 const jwt = require('jsonwebtoken');
 import { NextFunction, Request, Response } from "express";
-import { OAuth2Client } from "google-auth-library";
 import createHttpError from "http-errors";
 import Joi from "joi";
-import { config } from "../../../config/config";
 import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
 import { utcDateTime } from '../../utils/dateFormats';
@@ -76,11 +74,9 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         const { monthName, clientId } = req.body
 
         const userId = req.user._id
-        const startOfMonth = moment(monthName, 'MMMM').startOf('month').toDate();
-        const endOfMonth = moment(monthName, 'MMMM').endOf('month').toDate();
-       console.log("startOfMonth",startOfMonth)
-       console.log("endOfMonth",endOfMonth)
-
+        const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DD');
+const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DD');
+        console.log("startOfMonth",startOfMonth,endOfMonth)
         const result = await CalendarData.aggregate([
             {
                 $match: {

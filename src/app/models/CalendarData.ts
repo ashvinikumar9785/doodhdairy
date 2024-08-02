@@ -1,11 +1,11 @@
-import { object, string } from "joi";
 import mongoose from "mongoose";
+import moment from "moment";
 
 const schema = new mongoose.Schema({
     sellerId: {
         type: mongoose.Schema.Types.ObjectId,
         required: false,
-        default:null
+        default: null
     },
     userId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -15,29 +15,33 @@ const schema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         required: true,
     },
-
     quantity: {
         type: String,
-        default:null
+        default: null
     },
     quantityLabel: {
         type: String,
-        default:'Ltr'
+        default: 'Ltr'
     },
-
     milkRate: {
         type: Number,
     },
-    date:{
-        type:Date,
-        default:null
+    date: {
+        type: String,
+        default: null
     },
     milkBrand: {
         type: String,
         default: null,
     },
-  
-    
-})
+});
 
-export default mongoose.model('CalendarData', schema)
+// Pre-save middleware to format the date
+schema.pre('save', function (next) {
+    if (this.date) {
+        this.date = moment(this.date, moment.ISO_8601).format('YYYY-MM-DD');
+    }
+    next();
+});
+
+export default mongoose.model('CalendarData', schema);
