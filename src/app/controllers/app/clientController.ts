@@ -3,11 +3,9 @@ import { NextFunction, Request, Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import createHttpError from "http-errors";
 import Joi, { date } from "joi";
-import { config } from "../../../config/config";
 import User from "../../models/User";
 import Client from "../../models/Client";
-import { utcDateTime } from '../../utils/dateFormats';
-import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
+import { sendSuccessResponse } from "../../utils/respons";
 const mongoose = require('mongoose');
 
 const addClient = async (req: any, res: Response, next: NextFunction) => {

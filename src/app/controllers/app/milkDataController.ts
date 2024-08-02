@@ -4,8 +4,7 @@ import createHttpError from "http-errors";
 import Joi from "joi";
 import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
-import { utcDateTime } from '../../utils/dateFormats';
-import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
+import {  sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
 const moment = require('moment'); // For date manipulation
 const mongoose = require('mongoose');
