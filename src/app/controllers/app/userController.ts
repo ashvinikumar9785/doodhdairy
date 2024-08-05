@@ -6,7 +6,7 @@ import Joi from "joi";
 import { config } from "../../../config/config";
 import User from "../../models/User";
 import { utcDateTime } from '../../utils/dateFormats';
-import { sendBadRequestResponse, sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
+import {  sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
