@@ -13,6 +13,7 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
             clientId: Joi.string().required(),
+            id: Joi.string().optional(),
             date: Joi.date().required(),
             quantity: Joi.number().required(),
             sellerId:Joi.string().optional()
@@ -24,11 +25,26 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
         }
         const userId = req.user._id;
         
-        const { clientId, date, quantity,sellerId } = req.body;
+        const { clientId, date, quantity,sellerId,id } = req.body;
         const clientdata = await Client.findOne({ _id: clientId })
         const user = await User.findOne({ _id: clientId })
         let milkRate = 0;
         let milkBrand= null;
+        if(id){
+            const updatedRecord = await CalendarData.findOneAndUpdate(
+                { _id:id }, 
+                { 
+                    $set: {
+                        quantity,
+                    } 
+                },
+                { 
+                    returnOriginal: false 
+                }
+            );
+            return sendSuccessResponse({res, data: { client:updatedRecord }, message: 'Record updated'});
+
+        }
         if (clientdata) {
             milkRate = Number(clientdata.milkRate);
             milkBrand = clientdata.milkBrand
@@ -59,6 +75,8 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
         next(error)
     }
 }
+
+
 const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({

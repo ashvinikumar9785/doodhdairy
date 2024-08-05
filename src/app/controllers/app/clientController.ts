@@ -25,9 +25,6 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
 
         const checkPhone = await checkPhoneAlreadyExists(null, countryCode, phoneNumber);
 
-        if (checkPhone) {
-            return sendSuccessResponse({res, statustext: false, message: 'Phone number already exists for another user'});
-        }
         const client = await Client.create({
             name,
             countryCode,
@@ -63,12 +60,9 @@ const editClient = async (req: any, res: Response, next: NextFunction) => {
             throw createHttpError.UnprocessableEntity(error.message)
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate,clientId } = req.body;
-        const checkPhone = await checkPhoneAlreadyExists(clientId, countryCode, phoneNumber);
 
 
-        if (checkPhone) {
-            return sendSuccessResponse({res, statustext: false, message: 'Phone number already exists for another user'});
-        }
+       
         const client = await Client.findById({_id:clientId})
         if(client){
             client.name=name
