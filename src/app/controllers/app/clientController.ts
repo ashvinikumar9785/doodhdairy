@@ -23,7 +23,6 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate } = req.body;
 
-        const checkPhone = await checkPhoneAlreadyExists(null, countryCode, phoneNumber);
 
         const client = await Client.create({
             name,
@@ -60,9 +59,6 @@ const editClient = async (req: any, res: Response, next: NextFunction) => {
             throw createHttpError.UnprocessableEntity(error.message)
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate,clientId } = req.body;
-
-
-       
         const client = await Client.findById({_id:clientId})
         if(client){
             client.name=name
@@ -72,16 +68,10 @@ const editClient = async (req: any, res: Response, next: NextFunction) => {
             client.milkRate=milkRate
             await client.save()
             return sendSuccessResponse({res, data: { client }, message: 'Client updated'});
-
         }
         else{
             return sendSuccessResponse({res, statustext: false, message: 'Client not found'});
-
         }
-       
-
-
-
     } catch (error) {
         console.log('error', error);
         next(error)
