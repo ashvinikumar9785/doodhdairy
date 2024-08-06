@@ -149,7 +149,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 //                     issuer: 'doodhdiary'
 //                 }
 //             );
-//             return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
+//             return sendSuccessResponse({res, data: { user, token }, message: 'Login Success'});
+//             // return sendSuccessResponse(res, true,{ user,token }, 'Login Success');
 //         }
 
 
@@ -212,7 +213,11 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         const schema = Joi.object({
             name: Joi.string().required(),
             countryCode: Joi.string().allow('', null).required(),
-            phoneNumber: Joi.string().allow('', null).required(),
+            phoneNumber: Joi.string().allow('', null).pattern(/^\d{0,10}$/, 'numbers').max(10).required().messages({
+                'string.pattern.base': 'Phone number must contain up to 10 digits only.',
+                'string.max': 'Phone number must not exceed 10 characters.'
+            }),
+
             milkRate: Joi.number().required(),
 
             email: Joi.string().required(),
@@ -224,7 +229,7 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         const { _id } = req.user;
         const checkPhone = await checkPhoneAlreadyExists(_id, value.countryCode, value.phoneNumber);
 
-        if (checkPhone) {
+        if (checkPhone && value.countryCode != '' && value.phoneNumber!='') {
             return sendSuccessResponse({res, statustext: false, message: 'Phone number already exists for another user'});
         }
         let user = await User.findById({ _id });
