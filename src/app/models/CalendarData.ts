@@ -16,7 +16,7 @@ const schema = new mongoose.Schema({
         required: true,
     },
     quantity: {
-        type: String,
+        type: Number,
         default: null
     },
     quantityLabel: {
@@ -27,7 +27,7 @@ const schema = new mongoose.Schema({
         type: Number,
     },
     date: {
-        type: String,
+        type: Date,
         default: null
     },
     milkBrand: {
@@ -37,11 +37,11 @@ const schema = new mongoose.Schema({
 });
 
 // Pre-save middleware to format the date
-schema.pre('save', function (next) {
-    if (this.date) {
-        this.date = moment(this.date, moment.ISO_8601).format('YYYY-MM-DD');
-    }
-    next();
-});
+// schema.pre('save', function (next) {
+//     if (this.date) {
+//         this.date = moment(this.date, moment.ISO_8601).format('YYYY-MM-DD');
+//     }
+//     next();
+// });
 
 export default mongoose.model('CalendarData', schema);
