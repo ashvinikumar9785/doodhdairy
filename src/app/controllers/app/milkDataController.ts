@@ -57,6 +57,7 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
                 milkRate = 0; // or handle the NaN case appropriately
             }
         }
+
         const client = await CalendarData.create({
             clientId,
             date,
@@ -91,14 +92,17 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         const { monthName, clientId } = req.body
 
         const userId = req.user._id
-        const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DD');
-const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DD');
-        console.log("startOfMonth",startOfMonth,endOfMonth)
+        const monthNames = "2024-August";
+        const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        
+        
+    
         const result = await CalendarData.aggregate([
             {
                 $match: {
                     clientId: new mongoose.Types.ObjectId(clientId),
-                    date: { $gte: startOfMonth, $lte: endOfMonth }
+                    date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
                 }
             },
             {
@@ -134,6 +138,77 @@ const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM
     }
 
 };
+
+const getDateList = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            monthName: Joi.string().required(),
+            clientId: Joi.string().required(),
+
+        });
+        const { value, error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message)
+        }
+        const { monthName, clientId } = req.body
+
+        const userId = req.user._id
+        const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        
+        
+        console.log("startOfMonth", startOfMonth); 
+        console.log("endOfMonth", endOfMonth);     
+        const result = await CalendarData.aggregate([
+            {
+                $match: {
+                    clientId: new mongoose.Types.ObjectId(clientId),
+                    date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } }
+                }
+            },
+            {
+                $sort: { "_id": 1 }
+            },
+            {
+                $project: {
+                    _id: 0, 
+                    date: "$_id" 
+                }
+            }
+        ]);
+        if (result.length > 0) {
+            return sendSuccessResponse({res: res, statustext: true, data: result, message: 'Record Fetched'});
+        } else {
+            return sendSuccessResponse({res: res, data: [], message: 'Data not found'});
+
+        }
+    }
+    catch (error) {
+        next(error)
+    }
+
+};
+
+const deleteEntry = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const entryId = req.params.id;
+        let client = await CalendarData.deleteOne({ _id: entryId });
+        if (client.deletedCount === 1) {
+            return sendSuccessResponse({res: res, statustext: true, data: {}, message: 'Record Deleted'});
+
+        } else {
+            return sendSuccessResponse({res: res, data: {}, message: 'Data not found'});
+        }
+
+    } catch (error) {
+        next(error)
+    }
+}
 const getDateData = async (req: any, res: Response, next: NextFunction) => {
     try {
        
@@ -158,4 +233,4 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
 
 };
 
-export { saveMilkData, getDataForMonth,getDateData }
+export { saveMilkData, getDataForMonth,getDateData,getDateList,deleteEntry }
