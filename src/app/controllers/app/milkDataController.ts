@@ -6,6 +6,7 @@ import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
 import {  sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
+import { getDaysArray } from "../../utils/dateFormats";
 const moment = require('moment'); // For date manipulation
 const mongoose = require('mongoose');
 
@@ -139,6 +140,57 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
 
 };
 
+const getMonthEntries = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            monthName: Joi.string().required(),
+            clientId: Joi.string().required(),
+
+        });
+        const { error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message)
+        }
+        const { monthName, clientId } = req.body
+
+        const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        
+        const result = await CalendarData.aggregate([
+            {
+                $match: {
+                    clientId: new mongoose.Types.ObjectId(clientId),
+                    date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                }
+            },
+        ]);
+        if (result.length > 0) {
+            const allDates = getDaysArray(moment(monthName).format('YYYY'), moment(monthName).format('M'));
+            const allEntries: any[] = [];
+            allDates.forEach((date) => {
+                const isExist = result.find((data) => moment(date).format('YYYY-MM-DD') === moment(data.date).format('YYYY-MM-DD'));
+                if(isExist){
+                    allEntries.push(isExist);
+                } else {
+                    allEntries.push({
+                        ...result[0],
+                        date: date,
+                        quantity: 0,
+                    });
+                }
+            });
+            return sendSuccessResponse({res: res, statustext: true, data: allEntries, message: 'Record Fetched'});
+        } else {
+            return sendSuccessResponse({res: res, data: [], message: 'Data not found'});
+
+        }
+    }
+    catch (error) {
+        next(error)
+    }
+
+};
+
 const getDateList = async (req: any, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
@@ -152,13 +204,10 @@ const getDateList = async (req: any, res: Response, next: NextFunction) => {
         }
         const { monthName, clientId } = req.body
 
-        const userId = req.user._id
         const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
         const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
         
         
-        console.log("startOfMonth", startOfMonth); 
-        console.log("endOfMonth", endOfMonth);     
         const result = await CalendarData.aggregate([
             {
                 $match: {
@@ -233,4 +282,4 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
 
 };
 
-export { saveMilkData, getDataForMonth,getDateData,getDateList,deleteEntry }
+export { saveMilkData, getDataForMonth,getDateData,getDateList,deleteEntry, getMonthEntries }
