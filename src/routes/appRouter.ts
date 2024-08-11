@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { login, profile, updateRole,updateProfile } from "../app/controllers/app/userController";
 import { addClient,getClient, getClientProfile,clientDelete, editClient } from "../app/controllers/app/clientController";
-import { getDataForMonth, saveMilkData,getDateData, getDateList, deleteEntry } from "../app/controllers/app/milkDataController";
+import { getDataForMonth, saveMilkData,getDateData, getDateList, deleteEntry, getMonthEntries } from "../app/controllers/app/milkDataController";
 import { verifyToken } from "../app/utils/authentication";
 const appRouter = Router()
 
@@ -21,6 +21,7 @@ appRouter.post('/save-milk-data', verifyToken, saveMilkData );
 appRouter.post('/get-month-milk-history', verifyToken, getDataForMonth);
 appRouter.get('/get-date-milk', verifyToken, getDateData);
 appRouter.post('/get-date-list', verifyToken, getDateList);
+appRouter.post('/get-month-entries', verifyToken, getMonthEntries);
 appRouter.delete('/date-entry/:id',verifyToken, deleteEntry);
 
 
