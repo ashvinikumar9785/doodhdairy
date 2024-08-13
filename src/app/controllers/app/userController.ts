@@ -116,23 +116,23 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 //         //         filter.appleId = payload?.sub
 //         //     }
 //         // }
-//         let user = await User.findOne({email:req.body.email }).lean()
-//         if (!user) {
-//             user = await User.create({
-//                 // name: payload?.name,
-//                 // email: payload?.email,
-//                 // profilePicture: payload?.picture,
-//                 authTokenIssuedAt: utcDateTime().valueOf(),
-//                 role: req.body.role,
-//             })
-//         }
-//         else{
-//             user =  await User.findOneAndUpdate(
+//         // let user = await User.findOne({email:req.body.email }).lean()
+//         // if (!user) {
+//         //     user = await User.create({
+//         //         // name: payload?.name,
+//         //         // email: payload?.email,
+//         //         // profilePicture: payload?.picture,
+//         //         authTokenIssuedAt: utcDateTime().valueOf(),
+//         //         role: req.body.role,
+//         //     })
+//         // }
+//         // else{
+//             let user =  await User.findOneAndUpdate(
 //                 { email:req.body.email  }, 
 //                 {authTokenIssuedAt: utcDateTime().valueOf()},     
 //                 { new: true } 
 //             );
-//         }
+//         // }
 //         // if (!user) {
 //         //     return sendSuccessResponse(res, false,{ user }, 'Failed to create or update user');
 //         // }

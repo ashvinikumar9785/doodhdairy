@@ -6,6 +6,7 @@ import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
 import { sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
+import DepositAmount from "../../models/DepositAmount";
 import { getDaysArray } from "../../utils/dateFormats";
 const moment = require('moment'); // For date manipulation
 const mongoose = require('mongoose');
@@ -279,7 +280,126 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
     catch (error) {
         next(error)
     }
+}
 
-};
 
-export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries }
+    const depositAmount = async (req: any, res: Response, next: NextFunction) => {
+        try {
+            const schema = Joi.object({
+                clientId: Joi.string().required(),
+                date: Joi.date().required(),
+                amount: Joi.number().required(),
+    
+            });
+            const { value, error } = schema.validate(req.body);
+            if (error) {
+                throw createHttpError.UnprocessableEntity(error.message)
+            }
+            const userId = req.user._id;
+    
+            const { clientId, date, amount } = req.body;
+            const clientdata = await Client.findOne({ _id: clientId })
+          
+    
+            const depositAmount = await DepositAmount.create({
+                clientId,
+                date,
+                amount,
+            })
+            return sendSuccessResponse({ res, data: { depositAmount }, message: 'Record added' });
+    
+    
+    
+        } catch (error) {
+            console.log('error', error);
+            next(error)
+        }
+    };
+
+
+    const getRemainingAmount = async (req: any, res: Response, next: NextFunction) => {
+        try {
+            const schema = Joi.object({
+                monthName: Joi.string().required(),
+                clientId: Joi.string().required(),
+    
+            });
+            const { value, error } = schema.validate(req.body);
+            if (error) {
+                throw createHttpError.UnprocessableEntity(error.message)
+            }
+            const { monthName, clientId } = req.body
+    
+            const userId = req.user._id
+            const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+            const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+    
+    
+    
+            const result = await CalendarData.aggregate([
+                {
+                    $match: {
+                        clientId: new mongoose.Types.ObjectId(clientId),
+                        date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                    }
+                },
+                {
+                    $project: {
+                        quantity: { $toDouble: '$quantity' },
+                        milkRate: { $toDouble: '$milkRate' }
+                    }
+                },
+                {
+                    $addFields: {
+                        totalValue: { $multiply: ['$quantity', '$milkRate'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalAmount: { $sum: '$totalValue' },  
+                        totalQuantity: { $sum: '$quantity' } 
+                    }
+                }
+            ]);
+    
+            const amount = await DepositAmount.aggregate([
+                {
+                    $match: {
+                        clientId: new mongoose.Types.ObjectId(clientId),
+                        date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                    }
+                },
+                {
+                    $project: {
+                        amount: { $toDouble: '$amount' }                    
+                    }
+                },
+                {
+                    $addFields: {
+                        totalValue: { $multiply: ['$amount'] }
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalPaidAmount: { $sum: '$totalValue' },  
+                    }
+                }
+            ]);
+            if (result.length > 0) {
+                const firstResult = result[0];
+                return sendSuccessResponse({ res: res, statustext: true, data: firstResult, message: 'Record Fetched' });
+            } else {
+                return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
+    
+            }
+        }
+        catch (error) {
+            next(error)
+        }
+    
+    };
+
+
+export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries,depositAmount,getRemainingAmount }
