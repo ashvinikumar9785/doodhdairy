@@ -4,7 +4,7 @@ import createHttpError from "http-errors";
 import Joi from "joi";
 import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
-import {  sendSuccessResponse } from "../../utils/respons";
+import { sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
 import { getDaysArray } from "../../utils/dateFormats";
 const moment = require('moment'); // For date manipulation
@@ -17,7 +17,7 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             id: Joi.string().optional(),
             date: Joi.date().required(),
             quantity: Joi.number().required(),
-            sellerId:Joi.string().optional()
+            sellerId: Joi.string().optional()
 
         });
         const { value, error } = schema.validate(req.body);
@@ -25,25 +25,25 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             throw createHttpError.UnprocessableEntity(error.message)
         }
         const userId = req.user._id;
-        
-        const { clientId, date, quantity,sellerId,id } = req.body;
+
+        const { clientId, date, quantity, sellerId, id } = req.body;
         const clientdata = await Client.findOne({ _id: clientId })
         const user = await User.findOne({ _id: clientId })
         let milkRate = 0;
-        let milkBrand= null;
-        if(id){
+        let milkBrand = null;
+        if (id) {
             const updatedRecord = await CalendarData.findOneAndUpdate(
-                { _id:id }, 
-                { 
+                { _id: id },
+                {
                     $set: {
                         quantity,
-                    } 
+                    }
                 },
-                { 
-                    returnOriginal: false 
+                {
+                    returnOriginal: false
                 }
             );
-            return sendSuccessResponse({res, data: { client:updatedRecord }, message: 'Record updated'});
+            return sendSuccessResponse({ res, data: { client: updatedRecord }, message: 'Record updated' });
 
         }
         if (clientdata) {
@@ -68,7 +68,7 @@ const saveMilkData = async (req: any, res: Response, next: NextFunction) => {
             milkRate,
             milkBrand
         })
-        return sendSuccessResponse({res, data: { client }, message: 'Record added'});
+        return sendSuccessResponse({ res, data: { client }, message: 'Record added' });
 
 
 
@@ -96,9 +96,9 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         const monthNames = "2024-August";
         const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
         const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-        
-        
-    
+
+
+
         const result = await CalendarData.aggregate([
             {
                 $match: {
@@ -125,12 +125,12 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
                 }
             }
         ]);
-        
+
         if (result.length > 0) {
             const firstResult = result[0];
-            return sendSuccessResponse({res: res, statustext: true, data: firstResult, message: 'Record Fetched'});
+            return sendSuccessResponse({ res: res, statustext: true, data: firstResult, message: 'Record Fetched' });
         } else {
-            return sendSuccessResponse({res: res, data: [], message: 'Data not found'});
+            return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
 
         }
     }
@@ -155,7 +155,7 @@ const getMonthEntries = async (req: any, res: Response, next: NextFunction) => {
 
         const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
         const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-        
+
         const result = await CalendarData.aggregate([
             {
                 $match: {
@@ -167,9 +167,9 @@ const getMonthEntries = async (req: any, res: Response, next: NextFunction) => {
         if (result.length > 0) {
             const allDates = getDaysArray(moment(monthName).format('YYYY'), moment(monthName).format('M'));
             const allEntries: any[] = [];
-            allDates.forEach((date) => {
+            allDates.forEach((date: any) => {
                 const isExist = result.find((data) => moment(date).format('YYYY-MM-DD') === moment(data.date).format('YYYY-MM-DD'));
-                if(isExist){
+                if (isExist) {
                     allEntries.push(isExist);
                 } else {
                     allEntries.push({
@@ -179,9 +179,9 @@ const getMonthEntries = async (req: any, res: Response, next: NextFunction) => {
                     });
                 }
             });
-            return sendSuccessResponse({res: res, statustext: true, data: allEntries, message: 'Record Fetched'});
+            return sendSuccessResponse({ res: res, statustext: true, data: allEntries, message: 'Record Fetched' });
         } else {
-            return sendSuccessResponse({res: res, data: [], message: 'Data not found'});
+            return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
 
         }
     }
@@ -206,8 +206,8 @@ const getDateList = async (req: any, res: Response, next: NextFunction) => {
 
         const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
         const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-        
-        
+
+
         const result = await CalendarData.aggregate([
             {
                 $match: {
@@ -225,15 +225,15 @@ const getDateList = async (req: any, res: Response, next: NextFunction) => {
             },
             {
                 $project: {
-                    _id: 0, 
-                    date: "$_id" 
+                    _id: 0,
+                    date: "$_id"
                 }
             }
         ]);
         if (result.length > 0) {
-            return sendSuccessResponse({res: res, statustext: true, data: result, message: 'Record Fetched'});
+            return sendSuccessResponse({ res: res, statustext: true, data: result, message: 'Record Fetched' });
         } else {
-            return sendSuccessResponse({res: res, data: [], message: 'Data not found'});
+            return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
 
         }
     }
@@ -248,10 +248,10 @@ const deleteEntry = async (req: any, res: Response, next: NextFunction) => {
         const entryId = req.params.id;
         let client = await CalendarData.deleteOne({ _id: entryId });
         if (client.deletedCount === 1) {
-            return sendSuccessResponse({res: res, statustext: true, data: {}, message: 'Record Deleted'});
+            return sendSuccessResponse({ res: res, statustext: true, data: {}, message: 'Record Deleted' });
 
         } else {
-            return sendSuccessResponse({res: res, data: {}, message: 'Data not found'});
+            return sendSuccessResponse({ res: res, data: {}, message: 'Data not found' });
         }
 
     } catch (error) {
@@ -260,20 +260,20 @@ const deleteEntry = async (req: any, res: Response, next: NextFunction) => {
 }
 const getDateData = async (req: any, res: Response, next: NextFunction) => {
     try {
-       
+
         const { clientId, date } = req.query
 
         const userId = req.user._id
-        
-           
-                const dateBaseMilk = await CalendarData.findOne({
-                    clientId: clientId,
-                    date: date
-                })
-            
 
-            return sendSuccessResponse({res, data: dateBaseMilk, message: 'Record Fetched'});
-      
+
+        const dateBaseMilk = await CalendarData.findOne({
+            clientId: clientId,
+            date: date
+        })
+
+
+        return sendSuccessResponse({ res, data: dateBaseMilk, message: 'Record Fetched' });
+
 
     }
     catch (error) {
@@ -282,4 +282,4 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
 
 };
 
-export { saveMilkData, getDataForMonth,getDateData,getDateList,deleteEntry, getMonthEntries }
+export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries }
