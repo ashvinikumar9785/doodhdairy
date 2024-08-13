@@ -334,13 +334,13 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
             const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
             const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
     
-    
+    console.log("startOfMonthstartOfMonth",startOfMonth,endOfMonth)
     
             const result = await CalendarData.aggregate([
                 {
                     $match: {
                         clientId: new mongoose.Types.ObjectId(clientId),
-                        date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                        // date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
                     }
                 },
                 {
@@ -367,7 +367,7 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
                 {
                     $match: {
                         clientId: new mongoose.Types.ObjectId(clientId),
-                        date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                        // date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
                     }
                 },
                 {
