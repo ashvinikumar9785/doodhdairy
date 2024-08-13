@@ -7,6 +7,7 @@ import CalendarData from "../../models/CalendarData";
 import {  sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
 import { getDaysArray } from "../../utils/dateFormats";
+import DepositAmount from "../../models/DepositAmount"
 const moment = require('moment'); // For date manipulation
 const mongoose = require('mongoose');
 
