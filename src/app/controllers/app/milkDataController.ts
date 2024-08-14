@@ -94,11 +94,10 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
         const { monthName, clientId } = req.body
 
         const userId = req.user._id
-        const monthNames = "2024-August";
         const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
         const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
 
-
+        console.log("startOfMonthstartOfMonth",startOfMonth,endOfMonth)
 
         const result = await CalendarData.aggregate([
             {
@@ -126,12 +125,37 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
                 }
             }
         ]);
-
+        let amount = await DepositAmount.aggregate([
+            {
+                $match: {
+                    clientId: new mongoose.Types.ObjectId(clientId),
+                    date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                }
+            },
+            {
+                $project: {
+                    amount: { $toDouble: '$amount' }                    
+                }
+            },
+            {
+                $addFields: {
+                    totalValue: { $multiply: ['$amount'] }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalPaidAmount: { $sum: '$totalValue' },  
+                }
+            }
+        ]);
         if (result.length > 0) {
-            const firstResult = result[0];
-            return sendSuccessResponse({ res: res, statustext: true, data: firstResult, message: 'Record Fetched' });
+            let firstResult = result[0];
+             amount = amount.length?amount[0].totalPaidAmount:0;
+             firstResult.totalPaidAmount = amount
+            return sendSuccessResponse({ res: res, statustext: true, data:firstResult, message: 'Record Fetched' });
         } else {
-            return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
+            return sendSuccessResponse({ res: res, data: [], message: 'Data  found' });
 
         }
     }
@@ -320,7 +344,6 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
     const getRemainingAmount = async (req: any, res: Response, next: NextFunction) => {
         try {
             const schema = Joi.object({
-                monthName: Joi.string().required(),
                 clientId: Joi.string().required(),
     
             });
@@ -328,15 +351,8 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
             if (error) {
                 throw createHttpError.UnprocessableEntity(error.message)
             }
-            const { monthName, clientId } = req.body
-    
-            const userId = req.user._id
-            const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-            const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
-    
-    console.log("startOfMonthstartOfMonth",startOfMonth,endOfMonth)
-    
-            const result = await CalendarData.aggregate([
+            const { clientId } = req.body
+            const [result] = await CalendarData.aggregate([
                 {
                     $match: {
                         clientId: new mongoose.Types.ObjectId(clientId),
@@ -357,13 +373,12 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
                 {
                     $group: {
                         _id: null,
-                        totalAmount: { $sum: '$totalValue' },  
-                        totalQuantity: { $sum: '$quantity' } 
+                        totalAmount: { $sum: '$totalValue' }
                     }
                 }
             ]);
-    
-            const amount = await DepositAmount.aggregate([
+        
+            const [amountResult] = await DepositAmount.aggregate([
                 {
                     $match: {
                         clientId: new mongoose.Types.ObjectId(clientId),
@@ -372,28 +387,30 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
                 },
                 {
                     $project: {
-                        amount: { $toDouble: '$amount' }                    
-                    }
-                },
-                {
-                    $addFields: {
-                        totalValue: { $multiply: ['$amount'] }
+                        amount: { $toDouble: '$amount' }
                     }
                 },
                 {
                     $group: {
                         _id: null,
-                        totalPaidAmount: { $sum: '$totalValue' },  
+                        totalPaidAmount: { $sum: '$amount' }
                     }
                 }
             ]);
-            if (result.length > 0) {
-                const firstResult = result[0];
-                return sendSuccessResponse({ res: res, statustext: true, data: firstResult, message: 'Record Fetched' });
-            } else {
+        
+            const totalAmount = result?.totalAmount || 0;
+    const totalPaidAmount = amountResult?.totalPaidAmount || 0;
+
+    // Calculate remaining amount based on which is greater
+    let remainingAmount;
+    if (totalAmount >= totalPaidAmount) {
+        remainingAmount = totalAmount - totalPaidAmount;
+    } else {
+        remainingAmount = totalPaidAmount - totalAmount; // Or you can keep it as a negative value if overpaid
+    }
+                return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount}, message: 'Record Fetched' });
                 return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
     
-            }
         }
         catch (error) {
             next(error)
