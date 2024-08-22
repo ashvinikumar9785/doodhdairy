@@ -14,11 +14,11 @@ const verifyToken = (req: any, res: any, next: any) => {
             _id: decoded._id,
             authTokenIssuedAt: decoded.iat * 1000, //enable when single login needed
         });
-
         if (!user) {
             return sendUnauthorizedResponse({ res });
-
-
+        }
+        if (user.status === 'INACTIVE') {
+            return sendUnauthorizedResponse({ res });
         }
         const loginDate = new Date(user.authTokenIssuedAt).getTime();
         const currentDate = new Date().getTime();

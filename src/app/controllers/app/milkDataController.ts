@@ -408,7 +408,7 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
     } else {
         remainingAmount = totalPaidAmount - totalAmount; // Or you can keep it as a negative value if overpaid
     }
-                return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount}, message: 'Record Fetched' });
+                return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount,totalPaidAmount:totalAmount}, message: 'Record Fetched' });
                 return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
     
         }
