@@ -345,7 +345,6 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
         try {
             const schema = Joi.object({
                 clientId: Joi.string().required(),
-    
             });
             const { value, error } = schema.validate(req.body);
             if (error) {
@@ -377,7 +376,6 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
                     }
                 }
             ]);
-        
             const [amountResult] = await DepositAmount.aggregate([
                 {
                     $match: {
@@ -397,24 +395,19 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
                     }
                 }
             ]);
-        
             const totalAmount = result?.totalAmount || 0;
-    const totalPaidAmount = amountResult?.totalPaidAmount || 0;
-    console.log("amountResultamountResult",totalPaidAmount)
-
-    // Calculate remaining amount based on which is greater
-    let remainingAmount =totalAmount;
-    let balanceAmount = 0;
-    if (totalAmount >= totalPaidAmount) {
-        remainingAmount = totalAmount - totalPaidAmount;
-    } else {
-        remainingAmount = 0; // Or you can keep it as a negative value if overpaid
-        balanceAmount = totalPaidAmount-totalAmount
-    }
-
-
-                return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount,totalPaidAmount:totalPaidAmount,totalAmount:totalAmount,balanceAmount}, message: 'Record Fetched' });
-    
+            const totalPaidAmount = amountResult?.totalPaidAmount || 0;
+            // Calculate remaining amount based on which is greater
+            let remainingAmount =totalAmount;
+            let balanceAmount = 0;
+            if (totalAmount >= totalPaidAmount) {
+                remainingAmount = totalAmount - totalPaidAmount;
+            } else {
+                remainingAmount = totalPaidAmount-totalAmount; // Or you can keep it as a negative value if overpaid
+                balanceAmount = totalPaidAmount-totalAmount;
+            }
+            // remainingAmount = totalAmount-totalPaidAmount;
+            return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount,totalPaidAmount:totalPaidAmount,totalAmount:totalAmount,balanceAmount}, message: 'Record Fetched' });
         }
         catch (error) {
             next(error)
