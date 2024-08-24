@@ -404,15 +404,16 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
 
     // Calculate remaining amount based on which is greater
     let remainingAmount =totalAmount;
+    let balanceAmount = 0;
     if (totalAmount >= totalPaidAmount) {
         remainingAmount = totalAmount - totalPaidAmount;
     } else {
-        remainingAmount = totalPaidAmount - totalAmount; // Or you can keep it as a negative value if overpaid
+        remainingAmount = 0; // Or you can keep it as a negative value if overpaid
+        balanceAmount = totalPaidAmount-totalAmount
     }
 
 
-                return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount,totalPaidAmount:totalPaidAmount,totalAmount:totalAmount}, message: 'Record Fetched' });
-                return sendSuccessResponse({ res: res, data: [], message: 'Data not found' });
+                return sendSuccessResponse({ res: res, statustext: true, data: {remainingAmount,totalPaidAmount:totalPaidAmount,totalAmount:totalAmount,balanceAmount}, message: 'Record Fetched' });
     
         }
         catch (error) {
