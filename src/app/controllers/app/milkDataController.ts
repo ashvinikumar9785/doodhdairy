@@ -4,7 +4,7 @@ import createHttpError from "http-errors";
 import Joi from "joi";
 import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
-import { sendSuccessResponse } from "../../utils/respons";
+import { sendError, sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
 import DepositAmount from "../../models/DepositAmount";
 import { getDaysArray } from "../../utils/dateFormats";
@@ -317,7 +317,10 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
             });
             const { value, error } = schema.validate(req.body);
             if (error) {
-                throw createHttpError.UnprocessableEntity(error.message)
+                console.log("error.message",error.message)
+                return sendError({ res, data: { }, message: error.message });
+
+                // throw createHttpError.UnprocessableEntity(error.message)
             }
             const userId = req.user._id;
     
