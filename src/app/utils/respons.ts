@@ -15,3 +15,9 @@ export const sendNotFoundResponse = ({ res, statustext = false, message = 'NOT_F
 export const sendBadRequestResponse = ({ res, statustext = false, message = 'BAD_REQUEST' } : { res: Response, statustext?: boolean, message?: string }) => {
     return res.status(400).json({ statustext, message });
 };
+
+
+export const sendError = ({ res, statustext = true, data = {}, message = 'SUCCESS' } : { res: Response, statustext?: boolean, data?: any, message?: string }) => {
+    return res.status(422).json({ statustext, message, data });
+};
+
