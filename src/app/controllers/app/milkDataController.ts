@@ -4,7 +4,7 @@ import createHttpError from "http-errors";
 import Joi from "joi";
 import User from "../../models/User";
 import CalendarData from "../../models/CalendarData";
-import { sendError, sendSuccessResponse } from "../../utils/respons";
+import {  sendSuccessResponse } from "../../utils/respons";
 import Client from "../../models/Client";
 import DepositAmount from "../../models/DepositAmount";
 import { getDaysArray } from "../../utils/dateFormats";
@@ -154,6 +154,47 @@ const getDataForMonth = async (req: any, res: Response, next: NextFunction) => {
              amount = amount.length?amount[0].totalPaidAmount:0;
              firstResult.totalPaidAmount = amount
             return sendSuccessResponse({ res: res, statustext: true, data:firstResult, message: 'Record Fetched' });
+        } else {
+            return sendSuccessResponse({ res: res, data: [], message: 'Data  found' });
+
+        }
+    }
+    catch (error) {
+        next(error)
+    }
+
+};
+
+const getMonthDeposit = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            monthName: Joi.string().required(),
+            clientId: Joi.string().required(),
+
+        });
+        const { value, error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message)
+        }
+        const { monthName, clientId } = req.body
+
+        const userId = req.user._id
+        const startOfMonth = moment(monthName, 'YYYY-MMMM').startOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+        const endOfMonth = moment(monthName, 'YYYY-MMMM').endOf('month').format('YYYY-MM-DDTHH:mm:ss.SSS[Z]');
+
+
+      
+        let deposite = await DepositAmount.aggregate([
+            {
+                $match: {
+                    clientId: new mongoose.Types.ObjectId(clientId),
+                    date: { $gte: new Date(startOfMonth), $lte: new Date(endOfMonth) }
+                }
+            }
+           
+        ]);
+        if (deposite.length > 0) {
+            return sendSuccessResponse({ res: res, statustext: true, data:deposite, message: 'Record Fetched' });
         } else {
             return sendSuccessResponse({ res: res, data: [], message: 'Data  found' });
 
@@ -318,9 +359,8 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
             const { value, error } = schema.validate(req.body);
             if (error) {
                 console.log("error.message",error.message)
-                return sendError({ res, data: { }, message: error.message });
 
-                // throw createHttpError.UnprocessableEntity(error.message)
+                throw createHttpError.UnprocessableEntity(error.message)
             }
             const userId = req.user._id;
     
@@ -418,5 +458,34 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
     
     };
 
+    const editDeposite = async (req: any, res: Response, next: NextFunction) => {
+        try {
+            const schema = Joi.object({
+                id: Joi.string().required(),
+                amount: Joi.number().required(),
+    
+            });
+            const { value, error } = schema.validate(req.body);
+            if (error) {
+                throw createHttpError.UnprocessableEntity(error.message)
+            }
+            const { amount,id } = req.body;
+            const deposit = await DepositAmount.findById({_id:id})
+    
+            if(deposit){
+                deposit.amount=amount
+                
+                await deposit.save()
+                return sendSuccessResponse({res, data: { deposit }, message: 'Deposit amount updated'});
+            }
+            else{
+                return sendSuccessResponse({res, statustext: false, message: 'Client not found'});
+            }
+        } catch (error) {
+            console.log('error', error);
+            next(error)
+        }
+    }
 
-export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries,depositAmount,getRemainingAmount }
+
+export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries,depositAmount,getRemainingAmount,getMonthDeposit,editDeposite }
