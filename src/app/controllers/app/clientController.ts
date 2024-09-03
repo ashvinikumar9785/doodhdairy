@@ -23,10 +23,11 @@ const addClient = async (req: any, res: Response, next: NextFunction) => {
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate } = req.body;
 
+        const sanitizedCountryCode = countryCode.replace('+', '');
 
         const client = await Client.create({
             name,
-            countryCode,
+            countryCode:sanitizedCountryCode,
             phoneNumber,
             milkBrand,
             milkRate,
@@ -60,9 +61,11 @@ const editClient = async (req: any, res: Response, next: NextFunction) => {
         }
         const { name, countryCode, phoneNumber, milkBrand, milkRate,clientId } = req.body;
         const client = await Client.findById({_id:clientId})
+                const sanitizedCountryCode = countryCode.replace('+', '');
+
         if(client){
             client.name=name
-            client.countryCode=countryCode
+            client.countryCode=sanitizedCountryCode
             client.phoneNumber=phoneNumber
             client.milkBrand= milkBrand
             client.milkRate=milkRate
