@@ -487,5 +487,21 @@ const getDateData = async (req: any, res: Response, next: NextFunction) => {
         }
     }
 
+    const deleteDeposit = async (req: any, res: Response, next: NextFunction) => {
+        try {
+            const entryId = req.params.id;
+            let deposit = await DepositAmount.deleteOne({ _id: entryId });
+            if (deposit.deletedCount === 1) {
+                return sendSuccessResponse({ res: res, statustext: true, data: {}, message: 'Record Deleted' });
+    
+            } else {
+                return sendSuccessResponse({ res: res, data: {}, message: 'Data not found' });
+            }
+    
+        } catch (error) {
+            next(error)
+        }
+    }
 
-export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries,depositAmount,getRemainingAmount,getMonthDeposit,editDeposite }
+
+export { saveMilkData, getDataForMonth, getDateData, getDateList, deleteEntry, getMonthEntries,depositAmount,getRemainingAmount,getMonthDeposit,editDeposite, deleteDeposit }

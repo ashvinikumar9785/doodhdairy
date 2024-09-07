@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { login, profile, updateRole,updateProfile } from "../app/controllers/app/userController";
 import { addClient,getClient, getClientProfile,clientDelete, editClient } from "../app/controllers/app/clientController";
-import { getDataForMonth, saveMilkData,getDateData, getDateList, deleteEntry, getMonthEntries, depositAmount, getRemainingAmount, getMonthDeposit, editDeposite } from "../app/controllers/app/milkDataController";
+import { getDataForMonth, saveMilkData,getDateData, getDateList, deleteEntry, getMonthEntries, depositAmount, getRemainingAmount, getMonthDeposit, editDeposite, deleteDeposit } from "../app/controllers/app/milkDataController";
 import { verifyToken } from "../app/utils/authentication";
 const appRouter = Router()
 
@@ -26,6 +26,7 @@ appRouter.delete('/date-entry/:id',verifyToken, deleteEntry);
 appRouter.post('/deposit-amount', verifyToken, depositAmount);
 appRouter.post('/get-month-deposit', verifyToken, getMonthDeposit);
 appRouter.put('/edit-deposit-amount', verifyToken, editDeposite);
+appRouter.delete('/delete-deposit-entry/:id', deleteDeposit);
 
 appRouter.post('/remaining-amount', verifyToken, getRemainingAmount);
 
