@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { login, profile, updateRole,updateProfile } from "../app/controllers/app/userController";
+import { login, profile, updateRole,updateProfile, appleLogin } from "../app/controllers/app/userController";
 import { addClient,getClient, getClientProfile,clientDelete, editClient } from "../app/controllers/app/clientController";
 import { getDataForMonth, saveMilkData,getDateData, getDateList, deleteEntry, getMonthEntries, depositAmount, getRemainingAmount, getMonthDeposit, editDeposite, deleteDeposit } from "../app/controllers/app/milkDataController";
 import { verifyToken } from "../app/utils/authentication";
 const appRouter = Router()
 
 
+appRouter.post('/apple-login', appleLogin);
 appRouter.post('/login', login);
 appRouter.post('/update-role', updateRole);
 appRouter.get('/profile', verifyToken, profile);
