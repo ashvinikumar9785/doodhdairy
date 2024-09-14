@@ -7,6 +7,9 @@ import { config } from "../../../config/config";
 import User from "../../models/User";
 import { utcDateTime } from '../../utils/dateFormats';
 import { sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
+const appleSignin = require('apple-signin-auth')
+import fs from 'fs';
+
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -273,4 +276,94 @@ async function checkPhoneAlreadyExists(userID: string, countryCode: string, phon
         throw new Error('Failed to check phone number existence');
     }
 }
-export { login, updateRole, profile, updateProfile }
+const appleLogin = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const publicKey = fs.readFileSync('keys/private.pem', 'utf8');
+console.log("publicKeypublicKey",publicKey)
+      // Validate request body
+      const schema = Joi.object({
+        token: Joi.string().required(),
+        socialType: Joi.string().valid('APPLE').required(),
+        deviceType: Joi.string().required(),
+        socialId: Joi.string().required(),
+      });
+      const { value, error } = schema.validate(req.body);
+      if (error) {
+        throw createHttpError.UnprocessableEntity(error.message);
+      }
+  
+      const { token } = req.body;
+  
+      // Step 1: Generate the client secret
+      const clientSecret = appleSignin.getClientSecret({
+        clientID: 'com.doodhdiary',
+        teamID: 'HCX45TZRQ6',
+        privateKey: publicKey,
+        keyIdentifier: 'S5SHJY457X',
+        expAfter: 86400,
+      });
+  
+      // Step 2: Exchange code for authorization tokens
+      let tokenData;
+      try {
+        tokenData = await appleSignin.getAuthorizationToken(token, {
+          clientID: 'com.doodhdiary',
+          clientSecret,
+          redirectUri: 'YOUR_REDIRECT_URI', // Replace with your redirect URI
+        });
+      } catch (err:any) {
+        if (err.response && err.response.data) {
+          const { error, error_description } = err.response.data;
+          console.error('Token Exchange Error:', error, error_description);
+          if (error === 'invalid_grant') {
+            throw createHttpError.Unauthorized('Authorization code is expired or revoked.');
+          }
+        }
+        throw createHttpError.InternalServerError('Failed to exchange authorization code.');
+      }
+  
+      // Debug log to check token data
+      console.log('Token Data:', tokenData);
+  
+      // Ensure id_token is present
+      if (!tokenData.id_token) {
+        throw new Error('ID Token is missing from token data');
+      }
+  
+      // Step 3: Verify the identity token
+      const verifiedToken = await appleSignin.verifyIdToken(tokenData.id_token, {
+        audience: 'com.doodhdiary',
+        ignoreExpiration: false,
+      });
+  
+      const appleId = verifiedToken.sub;
+      const email = verifiedToken.email || tokenData.email;
+  
+      // Step 4: Check if the user exists, if not create a new user
+      let user = await User.findOne({ appleId });
+  
+      if (!user) {
+        user = new User({
+          appleId,
+          email,
+          accessToken: tokenData.access_token,
+          refreshToken: tokenData.refresh_token,
+        });
+        await user.save();
+      }
+  
+      // Step 5: Send response with user data
+      return res.status(200).json({
+        message: 'Login successful',
+        user,
+      });
+  
+    } catch (err) {
+      console.error(err);
+      return res.status(422).json({
+        message: 'SOMETHING_WENT_WRONG',
+      });
+    }
+  }
+  
+export { login, updateRole, profile, updateProfile,appleLogin }
