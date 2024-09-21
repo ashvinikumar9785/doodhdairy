@@ -9,6 +9,7 @@ import { utcDateTime } from '../../utils/dateFormats';
 import { sendNotFoundResponse, sendSuccessResponse } from "../../utils/respons";
 const appleSignin = require('apple-signin-auth')
 import fs from 'fs';
+const jwksClient = require('jwks-rsa');
 
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
@@ -202,7 +203,9 @@ const profile = async (req: any, res: Response, next: NextFunction) => {
 
         const { _id } = req.user;
         let user = await User.findById({ _id });
-        return res.json({ user });
+        // return res.json({ user });
+        return sendSuccessResponse({ res, data: { user }, message: 'User Profile' });
+
 
 
     } catch (error) {
@@ -276,94 +279,107 @@ async function checkPhoneAlreadyExists(userID: string, countryCode: string, phon
         throw new Error('Failed to check phone number existence');
     }
 }
-const appleLogin = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const publicKey = fs.readFileSync('keys/private.pem', 'utf8');
-console.log("publicKeypublicKey",publicKey)
-      // Validate request body
-      const schema = Joi.object({
-        token: Joi.string().required(),
-        socialType: Joi.string().valid('APPLE').required(),
-        deviceType: Joi.string().required(),
-        socialId: Joi.string().required(),
-      });
-      const { value, error } = schema.validate(req.body);
-      if (error) {
-        throw createHttpError.UnprocessableEntity(error.message);
-      }
-  
-      const { token } = req.body;
-  
-      // Step 1: Generate the client secret
-      const clientSecret = appleSignin.getClientSecret({
-        clientID: 'com.doodhdiary',
-        teamID: 'HCX45TZRQ6',
-        privateKey: publicKey,
-        keyIdentifier: 'S5SHJY457X',
-        expAfter: 86400,
-      });
-  
-      // Step 2: Exchange code for authorization tokens
-      let tokenData;
-      try {
-        tokenData = await appleSignin.getAuthorizationToken(token, {
-          clientID: 'com.doodhdiary',
-          clientSecret,
-          redirectUri: 'YOUR_REDIRECT_URI', // Replace with your redirect URI
-        });
-      } catch (err:any) {
-        if (err.response && err.response.data) {
-          const { error, error_description } = err.response.data;
-          console.error('Token Exchange Error:', error, error_description);
-          if (error === 'invalid_grant') {
-            throw createHttpError.Unauthorized('Authorization code is expired or revoked.');
-          }
+
+const client = jwksClient({
+    jwksUri: 'https://appleid.apple.com/auth/keys', // Apple's public key endpoint
+});
+
+// Function to get the signing key based on 'kid' (from the JWT header)
+const getKey = (header: any, callback: any) => {
+
+    client.getSigningKey(header.kid, (err: any, key: any) => {
+        if (err) {
+            console.error("Error fetching signing key:", err);
+            return callback(err, null);
         }
-        throw createHttpError.InternalServerError('Failed to exchange authorization code.');
-      }
-  
-      // Debug log to check token data
-      console.log('Token Data:', tokenData);
-  
-      // Ensure id_token is present
-      if (!tokenData.id_token) {
-        throw new Error('ID Token is missing from token data');
-      }
-  
-      // Step 3: Verify the identity token
-      const verifiedToken = await appleSignin.verifyIdToken(tokenData.id_token, {
-        audience: 'com.doodhdiary',
-        ignoreExpiration: false,
-      });
-  
-      const appleId = verifiedToken.sub;
-      const email = verifiedToken.email || tokenData.email;
-  
-      // Step 4: Check if the user exists, if not create a new user
-      let user = await User.findOne({ appleId });
-  
-      if (!user) {
-        user = new User({
-          appleId,
-          email,
-          accessToken: tokenData.access_token,
-          refreshToken: tokenData.refresh_token,
+
+        // Get the RSA public key from the fetched key
+        const signingKey = key.getPublicKey();
+        callback(null, signingKey);
+    });
+};
+const appleLogin = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const schema = Joi.object({
+            token: Joi.string().required(),
+            socialType: Joi.string().valid('APPLE').required(),
+            deviceType: Joi.string().required(),
+            socialId: Joi.string().required(),
+            name: Joi.optional(),
+            email: Joi.optional()
         });
-        await user.save();
-      }
-  
-      // Step 5: Send response with user data
-      return res.status(200).json({
-        message: 'Login successful',
-        user,
-      });
-  
-    } catch (err) {
-      console.error(err);
-      return res.status(422).json({
-        message: 'SOMETHING_WENT_WRONG',
-      });
+
+        const { value, error } = schema.validate(req.body);
+        if (error) {
+            throw createHttpError.UnprocessableEntity(error.message);
+        }
+
+        const { token, socialId, deviceType, name, email } = req.body;
+        // Decode and verify the token
+        jwt.verify(token, getKey, { algorithms: ['RS256'] }, async (err: any, verifiedToken: any) => {
+            if (err) {
+                return next(createHttpError.Unauthorized('Invalid token'));
+            }
+
+            const { sub: appleId } = verifiedToken; // Check for name here
+            if (appleId != socialId) {
+                return sendSuccessResponse({ res, statustext: false, data: {}, message: 'Failed to create or update user' });
+
+            }
+            let filter: { email?: string, appleId?: string } = {}
+            filter.appleId = appleId
+            if (email) {
+                filter.email = email;
+
+            }
+            let user = await User.findOne({ ...filter })
+            if (!user) {
+
+
+                user = await User.create({
+                    name: name,
+                    email: email,
+                    appleId,
+                    authTokenIssuedAt: utcDateTime().valueOf(),
+                    role: req.body.role,
+                })
+            }
+            else {
+                console.log("ddddd+++")
+                user = await User.findOneAndUpdate(
+                    { ...filter },
+                    { authTokenIssuedAt: utcDateTime().valueOf() },
+                    { new: true }
+                );
+            }
+            if (!user) {
+                return sendSuccessResponse({ res, statustext: false, data: { user }, message: 'Failed to create or update user' });
+            }
+
+            if (!user.role) {
+                return sendSuccessResponse({ res, data: { user }, message: 'Login Success please update role' });
+            }
+
+
+            // Generate JWT token for your app
+            const accessToken = jwt.sign(
+                { _id: user._id, name: user.name, email: user.email },
+                process.env.JWT_SECRET,
+                { expiresIn: '30d', issuer: 'doodhdiary' }
+            );
+
+            return sendSuccessResponse({
+                res,
+                data: { user, token: accessToken },
+                message: 'Login Success',
+            });
+        });
+    } catch (error) {
+        console.error('Error in Apple login:', error);
+        next(error);
     }
-  }
-  
-export { login, updateRole, profile, updateProfile,appleLogin }
+};
+
+
+
+export { login, updateRole, profile, updateProfile, appleLogin }

@@ -31,9 +31,9 @@ const verifyToken = (req: any, res: any, next: any) => {
         const currentDate = Math.floor(Date.now() / 1000); // Current time in seconds since epoch
 const expiryDate = user.authTokenIssuedAt; // Expiry time from the token in seconds since epoch
 
-if (currentDate >= expiryDate) {
-    return sendUnauthorizedResponse({ res, message: 'SESSION_EXPIRE' });
-}
+// if (currentDate >= expiryDate) {
+//     return sendUnauthorizedResponse({ res, message: 'SESSION_EXPIRE' });
+// }
         
         req.user = user; //add user obj to request
         next();

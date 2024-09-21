@@ -22,13 +22,14 @@ export interface IUser extends Document {
 const schema: Schema<IUser> = new mongoose.Schema({
     name: {
         type: String,
-        required: true,
+        required: false,
         default: null,
     },
     email: {
         type: String,
-        required: true,
-        unique: true,
+        required: false,
+        // unique: true,
+        default:null,
         set: (value: string) => value.toLowerCase(),
     },
     profilePicture: {
