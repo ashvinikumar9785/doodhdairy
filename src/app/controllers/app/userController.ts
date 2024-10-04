@@ -238,6 +238,10 @@ const updateProfile = async (req: any, res: Response, next: NextFunction) => {
         if (checkPhone && value.countryCode != '' && value.phoneNumber != '') {
             return sendSuccessResponse({ res, statustext: false, message: 'Phone number already exists for another user' });
         }
+        const checkEmail = await checkEmailAlready(_id, value.email);
+        if (checkEmail && value.email != '' ) {
+            return sendSuccessResponse({ res, statustext: false, message: 'Email already exists for another user' });
+        }
         let user = await User.findById({ _id });
         if (user) {
             user.name = value.name
@@ -298,6 +302,21 @@ const getKey = (header: any, callback: any) => {
         callback(null, signingKey);
     });
 };
+
+async function checkEmailAlready(userID: string, email: string, ): Promise<any> {
+    try {
+        const user = await User.findOne({
+            _id: { $ne: userID },
+            email: email,
+        }).lean();
+
+        return user !== null;
+    } catch (error) {
+        console.error('Error checking email existence:', error);
+        throw new Error('Failed to check email existence');
+    }
+};
+
 const appleLogin = async (req: any, res: Response, next: NextFunction) => {
     try {
         const schema = Joi.object({
@@ -380,6 +399,22 @@ const appleLogin = async (req: any, res: Response, next: NextFunction) => {
     }
 };
 
+const deleteUser = async (req: any, res: Response, next: NextFunction) => {
+    try {
+        const entryId = req.params.id;
+        // let deposit = await User.deleteOne({ _id: entryId });
+        // if (deposit.deletedCount === 1) {
+            return sendSuccessResponse({ res: res, statustext: true, data: {}, message: 'Record Deleted' });
+
+        // } else {
+        //     return sendSuccessResponse({ res: res, data: {}, message: 'Data not found' });
+        // }
+
+    } catch (error) {
+        next(error)
+    }
+}
 
 
-export { login, updateRole, profile, updateProfile, appleLogin }
+
+export { login, updateRole, profile, updateProfile, appleLogin,deleteUser }
