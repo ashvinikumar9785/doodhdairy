@@ -56,6 +56,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             })
         }
         else {
+            if(user.isDeleted){
+                return sendSuccessResponse({ res, statustext: false, data: { user }, message: 'Your Acccount is deleted please contact to admin' });
+            }
             user = await User.findOneAndUpdate(
                 { ...filter },
                 { authTokenIssuedAt: utcDateTime().valueOf() },
@@ -401,10 +404,14 @@ const appleLogin = async (req: any, res: Response, next: NextFunction) => {
 
 const deleteUser = async (req: any, res: Response, next: NextFunction) => {
     try {
-        const entryId = req.params.id;
-        // let deposit = await User.deleteOne({ _id: entryId });
+        const { _id } = req.user;
+        let deposit = await User.findOneAndUpdate(
+            { _id: _id },                 // Filter by `_id`
+            { $set: { isDeleted: true } },       // Set `deleted` flag or any field to indicate deletion
+            { new: true }                      // Return the updated document
+          );
         // if (deposit.deletedCount === 1) {
-            return sendSuccessResponse({ res: res, statustext: true, data: {}, message: 'Record Deleted' });
+            return sendSuccessResponse({ res: res, statustext: true, data: {}, message: "Your profile has been successfully deleted. We're sorry to see you go! If you ever wish to rejoin, we're just a click away." });
 
         // } else {
         //     return sendSuccessResponse({ res: res, data: {}, message: 'Data not found' });
