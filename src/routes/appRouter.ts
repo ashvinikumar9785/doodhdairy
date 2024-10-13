@@ -11,7 +11,7 @@ appRouter.post('/login', login);
 appRouter.post('/update-role', updateRole);
 appRouter.get('/profile', verifyToken, profile);
 appRouter.post('/profile', verifyToken, updateProfile);
-appRouter.delete('/delete-profile', deleteUser);
+appRouter.delete('/delete-profile',verifyToken, deleteUser);
 
 
 appRouter.post('/client', verifyToken, addClient);

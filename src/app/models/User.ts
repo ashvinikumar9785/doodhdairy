@@ -15,6 +15,7 @@ export interface IUser extends Document {
     status: 'ACTIVE' | 'INACTIVE';
     authTokenIssuedAt: number | null;
     isDeleted:boolean|false,
+    deletedAt:Date,
     createdAt: Date;
     updatedAt: Date;
 }
@@ -71,10 +72,13 @@ const schema: Schema<IUser> = new mongoose.Schema({
         type: Number,
         default: null,
     },
-
     isDeleted: {
         type: Boolean,
         default: false,
+    },
+    deletedAt: {
+        type: Date,
+        default: null,
     },
 }, {
     timestamps: true, // This will add createdAt and updatedAt fields automatically
