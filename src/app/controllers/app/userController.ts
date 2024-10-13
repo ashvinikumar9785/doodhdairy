@@ -35,8 +35,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         } else {
 
         }
-        let filter: { email?: string, googleId?: string, appleId?: string } = {}
-        if (payload?.email) {
+        let filter: { email?: string; googleId?: string; appleId?: string; isDeleted: boolean } = {
+            isDeleted: false // Set isDeleted to false as default
+          };  
+                  if (payload?.email) {
             filter.email = payload.email;
         } else {
             if (req.body.socialType == 'GOOGLE') {
@@ -407,7 +409,7 @@ const deleteUser = async (req: any, res: Response, next: NextFunction) => {
         const { _id } = req.user;
         let user = await User.findOneAndUpdate(
             { _id: _id },                 // Filter by `_id`
-            { $set: { isDeleted: true,authTokenIssuedAt:null } },       // Set `deleted` flag or any field to indicate deletion
+            { $set: { isDeleted: true,authTokenIssuedAt:null,deletedAt: new Date() } },       // Set `deleted` flag or any field to indicate deletion
             { new: true }                      // Return the updated document
           );
             return sendSuccessResponse({ res: res, statustext: true, data: {}, message: "Your profile has been successfully deleted. We're sorry to see you go! If you ever wish to rejoin, we're just a click away." });
@@ -418,6 +420,7 @@ const deleteUser = async (req: any, res: Response, next: NextFunction) => {
         next(error)
     }
 }
+
 
 
 export { login, updateRole, profile, updateProfile, appleLogin,deleteUser }
